@@ -64,7 +64,7 @@ func add*[K, V](m: Map[K, V], key: Hash, value: V): Map[K, V] =
   res[] = m[]
   res.root = copyRef(m.root)
   var node = res.root
-  add(res, node, bitsPerPart, key, value)
+  add(res, node, 0, key, value)
   res
 
 func add*[K, V](m: Map[K, V], key: K, value: V): Map[K, V] =
@@ -95,7 +95,7 @@ func del*[K, V](m: Map[K, V], key: Hash): Map[K, V] =
   res[] = m[]
   res.root = copyRef(m.root)
   var node = res.root
-  del(res, node, bitsPerPart, key)
+  del(res, node, 0, key)
   res
 
 func del*[K, V](m: Map[K, V], key: K): Map[K, V] =
@@ -103,7 +103,7 @@ func del*[K, V](m: Map[K, V], key: K): Map[K, V] =
 
 func getOrDefault*[K, V](m: Map[K, V], key: Hash, default: V): V =
   var node = m.root
-  var level = bitsPerPart
+  var level = 0
   while level < hashSize:
     let index = (key shr level) and mask
     var nextNode = node.nodes[index]
@@ -172,7 +172,7 @@ func incl*[T](s: Set[T], key: Hash): Set[T] =
   res[] = s[]
   res.root = copyRef(s.root)
   var node = res.root
-  incl(res, node, bitsPerPart, key)
+  incl(res, node, 0, key)
   res
 
 func incl*[T](s: Set[T], key: T): Set[T] =
@@ -203,7 +203,7 @@ func excl*[T](s: Set[T], key: Hash): Set[T] =
   res[] = s[]
   res.root = copyRef(s.root)
   var node = res.root
-  excl(res, node, bitsPerPart, key)
+  excl(res, node, 0, key)
   res
 
 func excl*[T](s: Set[T], key: T): Set[T] =
@@ -211,7 +211,7 @@ func excl*[T](s: Set[T], key: T): Set[T] =
 
 func contains*[T](s: Set[T], key: Hash): bool =
   var node = s.root
-  var level = bitsPerPart
+  var level = 0
   while level < hashSize:
     let index = (key shr level) and mask
     var nextNode = node.nodes[index]
@@ -281,7 +281,7 @@ func add*[T](v: Vec[T], key: Hash, value: T): Vec[T] =
   res[] = v[]
   res.root = copyRef(v.root)
   var node = res.root
-  add(res, node, bitsPerPart, key, value)
+  add(res, node, 0, key, value)
   res
 
 func add*[T](v: Vec[T], value: T): Vec[T] =
@@ -312,7 +312,7 @@ func del*[T](v: Vec[T], key: Hash): Vec[T] =
   res[] = v[]
   res.root = copyRef(v.root)
   var node = res.root
-  del(res, node, bitsPerPart, key)
+  del(res, node, 0, key)
   res
 
 func del*[T](v: Vec[T], key: T): Vec[T] =
@@ -321,7 +321,7 @@ func del*[T](v: Vec[T], key: T): Vec[T] =
 func getOrDefault*[T](v: Vec[T], index: int, default: T): T =
   let key = hash(index)
   var node = v.root
-  var level = bitsPerPart
+  var level = 0
   while level < hashSize:
     let index = (key shr level) and mask
     var nextNode = node.nodes[index]
