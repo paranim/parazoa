@@ -101,28 +101,28 @@ func del*[K, V](m: Map[K, V], key: Hash): Map[K, V] =
 func del*[K, V](m: Map[K, V], key: K): Map[K, V] =
   del(m, hash(key))
 
-func get*[K, V](m: Map[K, V], key: Hash, notFound: V): V =
+func getOrDefault*[K, V](m: Map[K, V], key: Hash, default: V): V =
   var node = m.root
   var level = bitsPerPart
   while level < hashSize:
     let index = (key shr level) and mask
     var nextNode = node.nodes[index]
     if nextNode == nil:
-      return notFound
+      return default
     else:
       case nextNode.kind:
       of Leaf:
         if nextNode.key == key:
           return nextNode.value
         else:
-          return notFound
+          return default
       of Branch:
         node = nextNode
         level += bitsPerPart
-  notFound
+  default
 
-func get*[K, V](m: Map[K, V], key: K, notFound: V): V =
-  get(m, hash(key), notFound)
+func getOrDefault*[K, V](m: Map[K, V], key: K, default: V): V =
+  getOrDefault(m, hash(key), default)
 
 ## sets
 
