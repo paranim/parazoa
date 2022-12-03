@@ -11,7 +11,9 @@ test "maps":
   check m2.get("hello", "") == "world"
   check m3.get("hello", "") == "goodbye"
   let m4 = m3.add("what's", "up")
+  let m5 = m3.del("what's").del("asdf")
   check m1.size == 0
   check m2.size == 1
   check m3.size == 1
   check m4.size == 2
+  check m5.size == 1
