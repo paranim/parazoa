@@ -231,3 +231,110 @@ func contains*[T](s: Set[T], key: Hash): bool =
 
 func contains*[T](s: Set[T], key: T): bool =
   contains(s, hash(key))
+
+## vecs
+
+type
+  VecNode*[T] = ref object
+    case kind: NodeKind
+    of Leaf:
+      key: Hash
+      value: T
+    of Branch:
+      nodes: array[branchWidth, VecNode[T]]
+  Vec*[T] = ref object
+    root: VecNode[T]
+    size*: int
+
+func initVec*[T](): Vec[T] =
+  new result
+  result.root = VecNode[T](kind: Branch)
+
+func add[T](res: Vec[T], node: var VecNode[T], startLevel: int, key: Hash, value: T) =
+  var level = startLevel
+  while level < hashSize:
+    let index = (key shr level) and mask
+    var nextNode = node.nodes[index]
+    if nextNode == nil:
+      node.nodes[index] = VecNode[T](kind: Leaf, key: key, value: value)
+      res.size += 1
+      break
+    else:
+      case nextNode.kind:
+      of Leaf:
+        if nextNode.key == key:
+          discard
+        else:
+          res.size -= 1
+          node.nodes[index] = VecNode[T](kind: Branch)
+          add(res, node, level + bitsPerPart, nextNode.key, nextNode.value)
+          add(res, node, level + bitsPerPart, key, value)
+        break
+      of Branch:
+        nextNode = copyRef(nextNode)
+        node.nodes[index] = nextNode
+        node = nextNode
+        level += bitsPerPart
+
+func add*[T](v: Vec[T], key: Hash, value: T): Vec[T] =
+  var res = new Vec[T]
+  res[] = v[]
+  res.root = copyRef(v.root)
+  var node = res.root
+  add(res, node, bitsPerPart, key, value)
+  res
+
+func add*[T](v: Vec[T], value: T): Vec[T] =
+  add(v, hash(v.size), value)
+
+func del[T](res: Vec[T], node: var VecNode[T], startLevel: int, key: Hash) =
+  var level = startLevel
+  while level < hashSize:
+    let index = (key shr level) and mask
+    var nextNode = node.nodes[index]
+    if nextNode == nil:
+      break
+    else:
+      case nextNode.kind:
+      of Leaf:
+        if nextNode.key == key:
+          node.nodes[index] = nil
+          res.size -= 1
+        break
+      of Branch:
+        nextNode = copyRef(nextNode)
+        node.nodes[index] = nextNode
+        node = nextNode
+        level += bitsPerPart
+
+func del*[T](v: Vec[T], key: Hash): Vec[T] =
+  var res = new Vec[T]
+  res[] = v[]
+  res.root = copyRef(v.root)
+  var node = res.root
+  del(res, node, bitsPerPart, key)
+  res
+
+func del*[T](v: Vec[T], key: T): Vec[T] =
+  del(v, hash(key))
+
+func getOrDefault*[T](v: Vec[T], index: int, default: T): T =
+  let key = hash(index)
+  var node = v.root
+  var level = bitsPerPart
+  while level < hashSize:
+    let index = (key shr level) and mask
+    var nextNode = node.nodes[index]
+    if nextNode == nil:
+      return default
+    else:
+      case nextNode.kind:
+      of Leaf:
+        if nextNode.key == key:
+          return nextNode.value
+        else:
+          return default
+      of Branch:
+        node = nextNode
+        level += bitsPerPart
+  default

@@ -36,3 +36,20 @@ test "sets":
   check s3.size == 1
   check s4.size == 2
   check s5.size == 1
+
+test "vecs":
+  let v1 = initVec[string]()
+  let v2 = v1.add("hello")
+  check v1.getOrDefault(0, "") == ""
+  check v2.getOrDefault(0, "") == "hello"
+  let v3 = v1.add("goodbye")
+  check v1.getOrDefault(0, "") == ""
+  check v2.getOrDefault(0, "") == "hello"
+  check v3.getOrDefault(0, "") == "goodbye"
+  let v4 = v3.add("what's")
+  let v5 = v3.del(0).del(10000)
+  check v1.size == 0
+  check v2.size == 1
+  check v3.size == 1
+  check v4.size == 2
+  check v5.size == 1
