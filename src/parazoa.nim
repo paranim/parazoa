@@ -11,7 +11,7 @@ type
     Leaf,
     Branch,
 
-func copyRef*[T](node: T): T =
+func copyRef[T](node: T): T =
   new result
   result[] = node[]
 
