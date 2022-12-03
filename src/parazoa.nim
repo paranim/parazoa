@@ -10,32 +10,32 @@ type
   NodeKind* = enum
     Leaf,
     Branch,
-  Node*[K, V] = ref object
+  MapNode*[K, V] = ref object
     case kind: NodeKind
     of Leaf:
       key: Hash
       value: V
     of Branch:
-      nodes: array[branchWidth, Node[K, V]]
+      nodes: array[branchWidth, MapNode[K, V]]
   Map*[K, V] = ref object
-    root: Node[K, V]
+    root: MapNode[K, V]
     size*: int
 
 func initMap*[K, V](): Map[K, V] =
   new result
-  result.root = Node[K, V](kind: Branch)
+  result.root = MapNode[K, V](kind: Branch)
 
-func copy*[K, V](node: Node[K, V]): Node[K, V] =
+func copy*[K, V](node: MapNode[K, V]): MapNode[K, V] =
   new result
   result[] = node[]
 
-func add[K, V](res: Map[K, V], node: var Node[K, V], startLevel: int, key: Hash, value: V) =
+func add[K, V](res: Map[K, V], node: var MapNode[K, V], startLevel: int, key: Hash, value: V) =
   var level = startLevel
   while level < hashSize:
     let index = (key shr level) and mask
     var nextNode = node.nodes[index]
     if nextNode == nil:
-      node.nodes[index] = Node[K, V](kind: Leaf, key: key, value: value)
+      node.nodes[index] = MapNode[K, V](kind: Leaf, key: key, value: value)
       res.size += 1
       break
     else:
@@ -45,7 +45,7 @@ func add[K, V](res: Map[K, V], node: var Node[K, V], startLevel: int, key: Hash,
           node.nodes[index].value = value
         else:
           res.size -= 1
-          node.nodes[index] = Node[K, V](kind: Branch)
+          node.nodes[index] = MapNode[K, V](kind: Branch)
           add(res, node, level + bitsPerPart, nextNode.key, nextNode.value)
           add(res, node, level + bitsPerPart, key, value)
         break
@@ -66,7 +66,7 @@ func add*[K, V](m: Map[K, V], key: Hash, value: V): Map[K, V] =
 func add*[K, V](m: Map[K, V], key: K, value: V): Map[K, V] =
   add(m, hash(key), value)
 
-func del[K, V](res: Map[K, V], node: var Node[K, V], startLevel: int, key: Hash) =
+func del[K, V](res: Map[K, V], node: var MapNode[K, V], startLevel: int, key: Hash) =
   var level = startLevel
   while level < hashSize:
     let index = (key shr level) and mask
