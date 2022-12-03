@@ -53,3 +53,13 @@ test "vecs":
   check v3.size == 1
   check v4.size == 2
   check v5.size == 1
+
+import hashes
+
+test "collisions":
+  let m = initMap[string, string]().add(Hash(0), "hello").add(Hash(1 shl 5), "world")
+  let s = initSet[string]().incl(Hash(0)).incl(Hash(1 shl 5))
+  let v = initVec[string]().add(Hash(0), "hello").add(Hash(1 shl 5), "world")
+  check m.size == 2
+  check s.size == 2
+  check v.size == 2
