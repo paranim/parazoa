@@ -57,9 +57,9 @@ test "vecs":
 import hashes
 
 test "collisions":
-  let m = initMap[string, string]().add(Hash(0), "hello").add(Hash(1 shl 5), "world")
-  let s = initSet[string]().incl(Hash(0)).incl(Hash(1 shl 5))
-  let v = initVec[string]().add(Hash(0), "hello").add(Hash(1 shl 5), "world")
+  let m = initMap[string, string]().add(Hash(0), "hello").add(Hash(1 shl bitsPerPart), "world")
+  let s = initSet[string]().incl(Hash(0)).incl(Hash(1 shl bitsPerPart))
+  let v = initVec[string]().add(Hash(0), "hello").add(Hash(1 shl bitsPerPart), "world")
   check m.size == 2
   check s.size == 2
   check v.size == 2
