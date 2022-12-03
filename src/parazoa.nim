@@ -10,6 +10,14 @@ type
   NodeKind* = enum
     Leaf,
     Branch,
+
+func copyRef*[T](node: T): T =
+  new result
+  result[] = node[]
+
+## maps
+
+type
   MapNode*[K, V] = ref object
     case kind: NodeKind
     of Leaf:
@@ -24,10 +32,6 @@ type
 func initMap*[K, V](): Map[K, V] =
   new result
   result.root = MapNode[K, V](kind: Branch)
-
-func copy*[K, V](node: MapNode[K, V]): MapNode[K, V] =
-  new result
-  result[] = node[]
 
 func add[K, V](res: Map[K, V], node: var MapNode[K, V], startLevel: int, key: Hash, value: V) =
   var level = startLevel
@@ -50,7 +54,7 @@ func add[K, V](res: Map[K, V], node: var MapNode[K, V], startLevel: int, key: Ha
           add(res, node, level + bitsPerPart, key, value)
         break
       of Branch:
-        nextNode = copy(nextNode)
+        nextNode = copyRef(nextNode)
         node.nodes[index] = nextNode
         node = nextNode
         level += bitsPerPart
@@ -58,7 +62,7 @@ func add[K, V](res: Map[K, V], node: var MapNode[K, V], startLevel: int, key: Ha
 func add*[K, V](m: Map[K, V], key: Hash, value: V): Map[K, V] =
   var res = new Map[K, V]
   res[] = m[]
-  res.root = copy(m.root)
+  res.root = copyRef(m.root)
   var node = res.root
   add(res, node, bitsPerPart, key, value)
   res
@@ -81,7 +85,7 @@ func del[K, V](res: Map[K, V], node: var MapNode[K, V], startLevel: int, key: Ha
           res.size -= 1
         break
       of Branch:
-        nextNode = copy(nextNode)
+        nextNode = copyRef(nextNode)
         node.nodes[index] = nextNode
         node = nextNode
         level += bitsPerPart
@@ -89,7 +93,7 @@ func del[K, V](res: Map[K, V], node: var MapNode[K, V], startLevel: int, key: Ha
 func del*[K, V](m: Map[K, V], key: Hash): Map[K, V] =
   var res = new Map[K, V]
   res[] = m[]
-  res.root = copy(m.root)
+  res.root = copyRef(m.root)
   var node = res.root
   del(res, node, bitsPerPart, key)
   res
@@ -119,3 +123,111 @@ func get*[K, V](m: Map[K, V], key: Hash, notFound: V): V =
 
 func get*[K, V](m: Map[K, V], key: K, notFound: V): V =
   get(m, hash(key), notFound)
+
+## sets
+
+type
+  SetNode*[T] = ref object
+    case kind: NodeKind
+    of Leaf:
+      key: Hash
+    of Branch:
+      nodes: array[branchWidth, SetNode[T]]
+  Set*[T] = ref object
+    root: SetNode[T]
+    size*: int
+
+func initSet*[T](): Set[T] =
+  new result
+  result.root = SetNode[T](kind: Branch)
+
+func incl[T](res: Set[T], node: var SetNode[T], startLevel: int, key: Hash) =
+  var level = startLevel
+  while level < hashSize:
+    let index = (key shr level) and mask
+    var nextNode = node.nodes[index]
+    if nextNode == nil:
+      node.nodes[index] = SetNode[T](kind: Leaf, key: key)
+      res.size += 1
+      break
+    else:
+      case nextNode.kind:
+      of Leaf:
+        if nextNode.key == key:
+          discard
+        else:
+          res.size -= 1
+          node.nodes[index] = SetNode[T](kind: Branch)
+          incl(res, node, level + bitsPerPart, nextNode.key)
+          incl(res, node, level + bitsPerPart, key)
+        break
+      of Branch:
+        nextNode = copyRef(nextNode)
+        node.nodes[index] = nextNode
+        node = nextNode
+        level += bitsPerPart
+
+func incl*[T](s: Set[T], key: Hash): Set[T] =
+  var res = new Set[T]
+  res[] = s[]
+  res.root = copyRef(s.root)
+  var node = res.root
+  incl(res, node, bitsPerPart, key)
+  res
+
+func incl*[T](s: Set[T], key: T): Set[T] =
+  incl(s, hash(key))
+
+func excl[T](res: Set[T], node: var SetNode[T], startLevel: int, key: Hash) =
+  var level = startLevel
+  while level < hashSize:
+    let index = (key shr level) and mask
+    var nextNode = node.nodes[index]
+    if nextNode == nil:
+      break
+    else:
+      case nextNode.kind:
+      of Leaf:
+        if nextNode.key == key:
+          node.nodes[index] = nil
+          res.size -= 1
+        break
+      of Branch:
+        nextNode = copyRef(nextNode)
+        node.nodes[index] = nextNode
+        node = nextNode
+        level += bitsPerPart
+
+func excl*[T](s: Set[T], key: Hash): Set[T] =
+  var res = new Set[T]
+  res[] = s[]
+  res.root = copyRef(s.root)
+  var node = res.root
+  excl(res, node, bitsPerPart, key)
+  res
+
+func excl*[T](s: Set[T], key: T): Set[T] =
+  excl(s, hash(key))
+
+func contains*[T](s: Set[T], key: Hash): bool =
+  var node = s.root
+  var level = bitsPerPart
+  while level < hashSize:
+    let index = (key shr level) and mask
+    var nextNode = node.nodes[index]
+    if nextNode == nil:
+      return false
+    else:
+      case nextNode.kind:
+      of Leaf:
+        if nextNode.key == key:
+          return true
+        else:
+          return false
+      of Branch:
+        node = nextNode
+        level += bitsPerPart
+  false
+
+func contains*[T](s: Set[T], key: T): bool =
+  contains(s, hash(key))
