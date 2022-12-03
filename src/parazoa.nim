@@ -4,7 +4,7 @@ const
   bitsPerPart = 5
   branchWidth = 1 shl bitsPerPart
   mask = branchWidth - 1
-  levels = int((sizeof(Hash) * 8) / bitsPerPart) - 1
+  hashSize = sizeof(Hash) * 8
 
 type
   NodeKind* = enum
@@ -13,6 +13,7 @@ type
   Node*[K, V] = ref object
     case kind: NodeKind
     of Leaf:
+      key: Hash
       value: V
     of Branch:
       nodes: array[branchWidth, Node[K, V]]
@@ -28,39 +29,62 @@ func copy*[K, V](node: Node[K, V]): Node[K, V] =
   new result
   result[] = node[]
 
-func add*[K, V](m: Map[K, V], key: K, value: V): Map[K, V] =
-  new result
-  result[] = m[]
-  result.root = copy(m.root)
-  let h = hash(key)
-  var node = result.root
-  for level in countDown(levels, 1):
-    let index = (h shr level) and mask
+func add[K, V](res: Map[K, V], node: var Node[K, V], startLevel: int, key: Hash, value: V) =
+  var level = startLevel
+  while level < hashSize:
+    let index = (key shr level) and mask
     var nextNode = node.nodes[index]
     if nextNode == nil:
-      if level > 1:
-        nextNode = Node[K, V](kind: Branch)
-      else:
-        nextNode = Node[K, V](kind: Leaf)
-        result.size += 1
-      node.nodes[index] = nextNode
+      node.nodes[index] = Node[K, V](kind: Leaf, key: key, value: value)
+      res.size += 1
+      break
     else:
-      nextNode = copy(nextNode)
-    if level > 1:
-      node = nextNode
-    else:
-      nextNode.value = value
+      case nextNode.kind:
+      of Leaf:
+        if nextNode.key == key:
+          node.nodes[index].value = value
+        else:
+          res.size -= 1
+          node.nodes[index] = Node[K, V](kind: Branch)
+          add(res, node, level + bitsPerPart, nextNode.key, nextNode.value)
+          add(res, node, level + bitsPerPart, key, value)
+        break
+      of Branch:
+        nextNode = copy(nextNode)
+        node.nodes[index] = nextNode
+        node = nextNode
+        level += bitsPerPart
 
-func get*[K, V](m: Map[K, V], key: K, notFound: V): V =
-  let h = hash(key)
+func add*[K, V](m: Map[K, V], key: Hash, value: V): Map[K, V] =
+  var res = new Map[K, V]
+  res[] = m[]
+  res.root = copy(m.root)
+  var node = res.root
+  add(res, node, bitsPerPart, key, value)
+  res
+
+func add*[K, V](m: Map[K, V], key: K, value: V): Map[K, V] =
+  add(m, hash(key), value)
+
+func get*[K, V](m: Map[K, V], key: Hash, notFound: V): V =
   var node = m.root
-  for level in countDown(levels, 1):
-    let index = (h shr level) and mask
+  var level = bitsPerPart
+  while level < hashSize:
+    let index = (key shr level) and mask
     var nextNode = node.nodes[index]
     if nextNode == nil:
       return notFound
-    node = nextNode
-  if node == nil:
-    notFound
-  else:
-    node.value
+    else:
+      case nextNode.kind:
+      of Leaf:
+        if nextNode.key == key:
+          return nextNode.value
+        else:
+          return notFound
+      of Branch:
+        node = nextNode
+        level += bitsPerPart
+  notFound
+
+func get*[K, V](m: Map[K, V], key: K, notFound: V): V =
+  get(m, hash(key), notFound)
