@@ -263,7 +263,7 @@ func add[T](res: Vec[T], node: var VecNode[T], startLevel: int, key: int, value:
       case nextNode.kind:
       of Leaf:
         if nextNode.key == key:
-          discard
+          node.nodes[index].value = value
         else:
           res.size -= 1
           node.nodes[index] = VecNode[T](kind: Branch)

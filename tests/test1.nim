@@ -51,6 +51,9 @@ test "vecs":
   check v2.size == 1
   check v3.size == 1
   check v4.size == 2
+  let v5 = v4.add(1, "hello")
+  check v5.getOrDefault(0, "") == "goodbye"
+  check v5.getOrDefault(1, "") == "hello"
 
 import hashes
 
