@@ -238,7 +238,7 @@ type
   VecNode*[T] = ref object
     case kind: NodeKind
     of Leaf:
-      key: Hash
+      key: int
       value: T
     of Branch:
       nodes: array[branchWidth, VecNode[T]]
@@ -250,7 +250,7 @@ func initVec*[T](): Vec[T] =
   new result
   result.root = VecNode[T](kind: Branch)
 
-func add[T](res: Vec[T], node: var VecNode[T], startLevel: int, key: Hash, value: T) =
+func add[T](res: Vec[T], node: var VecNode[T], startLevel: int, key: int, value: T) =
   var level = startLevel
   while level < hashSize:
     let index = (key shr level) and mask
@@ -276,7 +276,7 @@ func add[T](res: Vec[T], node: var VecNode[T], startLevel: int, key: Hash, value
         node = nextNode
         level += bitsPerPart
 
-func add*[T](v: Vec[T], key: Hash, value: T): Vec[T] =
+func add*[T](v: Vec[T], key: int, value: T): Vec[T] =
   var res = new Vec[T]
   res[] = v[]
   res.root = copyRef(v.root)
@@ -285,41 +285,9 @@ func add*[T](v: Vec[T], key: Hash, value: T): Vec[T] =
   res
 
 func add*[T](v: Vec[T], value: T): Vec[T] =
-  add(v, hash(v.size), value)
+  add(v, v.size, value)
 
-func del[T](res: Vec[T], node: var VecNode[T], startLevel: int, key: Hash) =
-  var level = startLevel
-  while level < hashSize:
-    let index = (key shr level) and mask
-    var nextNode = node.nodes[index]
-    if nextNode == nil:
-      break
-    else:
-      case nextNode.kind:
-      of Leaf:
-        if nextNode.key == key:
-          node.nodes[index] = nil
-          res.size -= 1
-        break
-      of Branch:
-        nextNode = copyRef(nextNode)
-        node.nodes[index] = nextNode
-        node = nextNode
-        level += bitsPerPart
-
-func del*[T](v: Vec[T], key: Hash): Vec[T] =
-  var res = new Vec[T]
-  res[] = v[]
-  res.root = copyRef(v.root)
-  var node = res.root
-  del(res, node, 0, key)
-  res
-
-func del*[T](v: Vec[T], key: T): Vec[T] =
-  del(v, hash(key))
-
-func getOrDefault*[T](v: Vec[T], index: int, default: T): T =
-  let key = hash(index)
+func getOrDefault*[T](v: Vec[T], key: int, default: T): T =
   var node = v.root
   var level = 0
   while level < hashSize:
