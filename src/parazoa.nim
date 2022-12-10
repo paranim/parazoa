@@ -1,7 +1,7 @@
 import hashes
 
 const
-  bitsPerPart* = 5
+  bitsPerPart* {.intdefine.} = 5
   branchWidth = 1 shl bitsPerPart
   mask = branchWidth - 1
   hashSize = sizeof(Hash) * 8
