@@ -6,14 +6,19 @@ test "maps":
   let m2 = m1.add("hello", "world")
   check m1.getOrDefault("hello", "") == ""
   check m2.getOrDefault("hello", "") == "world"
+  expect(KeyError):
+    discard m1.get("hello")
+  check m2.get("hello") == "world"
   let m3 = m1.add("hello", "goodbye")
-  check m1.getOrDefault("hello", "") == ""
-  check m2.getOrDefault("hello", "") == "world"
-  check m3.getOrDefault("hello", "") == "goodbye"
+  expect(KeyError):
+    discard m1.get("hello")
+  check m2.get("hello") == "world"
+  check m3.get("hello") == "goodbye"
   let m4 = m3.add("what's", "up")
   let m5 = m3.del("what's").del("asdf")
-  check m5.getOrDefault("hello", "") == "goodbye"
-  check m5.getOrDefault("what's", "") == ""
+  check m5.get("hello") == "goodbye"
+  expect(KeyError):
+    discard m5.get("what's")
   check m1.size == 0
   check m2.size == 1
   check m3.size == 1
@@ -42,23 +47,27 @@ test "vecs":
   let v2 = v1.add("hello")
   check v1.getOrDefault(0, "") == ""
   check v2.getOrDefault(0, "") == "hello"
+  expect(IndexDefect):
+    discard v1.get(0)
+  check v2.get(0) == "hello"
   let v3 = v1.add("goodbye")
-  check v1.getOrDefault(0, "") == ""
-  check v2.getOrDefault(0, "") == "hello"
-  check v3.getOrDefault(0, "") == "goodbye"
+  expect(IndexDefect):
+    discard v1.get(0)
+  check v2.get(0) == "hello"
+  check v3.get(0) == "goodbye"
   let v4 = v3.add("what's")
   check v1.size == 0
   check v2.size == 1
   check v3.size == 1
   check v4.size == 2
   let v5 = v4.add(1, "hello")
-  check v5.getOrDefault(0, "") == "goodbye"
-  check v5.getOrDefault(1, "") == "hello"
+  check v5.get(0) == "goodbye"
+  check v5.get(1) == "hello"
   var v6 = initVec[string]()
   for i in 0 .. 1024:
     v6 = v6.add($i)
   check v6.size == 1025
-  check v6.getOrDefault(1024, "") == "1024"
+  check v6.get(1024) == "1024"
 
 import hashes
 
