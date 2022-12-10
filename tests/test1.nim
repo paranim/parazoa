@@ -72,7 +72,11 @@ test "vecs":
 import hashes
 
 test "partial hash collisions":
-  let m = initMap[string, string]().add(Hash(0), "hello").add(Hash(1 shl bitsPerPart), "world")
-  let s = initSet[string]().incl(Hash(0)).incl(Hash(1 shl bitsPerPart))
+  let m = initMap[string, string]()
+            .add(Hash(0), "foo", "hello")
+            .add(Hash(1 shl bitsPerPart), "foo", "world")
+  let s = initSet[string]()
+            .incl(Hash(0), "foo")
+            .incl(Hash(1 shl bitsPerPart), "foo")
   check m.size == 2
   check s.size == 2
