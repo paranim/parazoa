@@ -24,6 +24,27 @@ test "maps":
   check m3.size == 1
   check m4.size == 2
   check m5.size == 1
+  # large map
+  var m6 = initMap[string, string]()
+  for i in 0 .. 1024:
+    m6 = m6.add($i, $i)
+  check m6.size == 1025
+  check m6.get("1024") == "1024"
+  # pairs
+  var m7 = initMap[string, string]()
+  for (k, v) in m6.pairs:
+    m7 = m7.add(k, v)
+  check m7.size == 1025
+  # keys
+  var m8 = initMap[string, string]()
+  for k in m7.keys:
+    m8 = m8.add(k, k)
+  check m8.size == 1025
+  # values
+  var m9 = initMap[string, string]()
+  for v in m8.values:
+    m9 = m9.add(v, v)
+  check m9.size == 1025
 
 test "sets":
   let s1 = initSet[string]()
@@ -41,6 +62,17 @@ test "sets":
   check s3.size == 1
   check s4.size == 2
   check s5.size == 1
+  # large set
+  var s6 = initSet[string]()
+  for i in 0 .. 1024:
+    s6 = s6.incl($i)
+  check s6.size == 1025
+  check s6.contains("1024")
+  # items
+  var s7 = initSet[string]()
+  for k in s6.items:
+    s7 = s7.incl(k)
+  check s7.size == 1025
 
 test "vecs":
   let v1 = initVec[string]()
@@ -63,11 +95,17 @@ test "vecs":
   let v5 = v4.add(1, "hello")
   check v5.get(0) == "goodbye"
   check v5.get(1) == "hello"
+  # large vector
   var v6 = initVec[string]()
   for i in 0 .. 1024:
     v6 = v6.add($i)
   check v6.size == 1025
   check v6.get(1024) == "1024"
+  # items
+  var v7 = initVec[string]()
+  for v in v6.items:
+    v7 = v7.add(v)
+  check v7.size == 1025
 
 import hashes
 

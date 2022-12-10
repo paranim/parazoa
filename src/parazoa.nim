@@ -35,31 +35,28 @@ func initMap*[K, V](): Map[K, V] {.raises: []} =
   new result
   result.root = MapNode[K, V](kind: Branch)
 
-func add[K, V](res: Map[K, V], node: var MapNode[K, V], startLevel: int, keyHash: Hash, key: K, value: V) {.raises: []} =
-  var level = startLevel
-  while level < hashSize:
-    let index = (keyHash shr level) and mask
-    var nextNode = node.nodes[index]
-    if nextNode == nil:
-      node.nodes[index] = MapNode[K, V](kind: Leaf, keyHash: keyHash, key: key, value: value)
-      res.size += 1
-      break
-    else:
-      case nextNode.kind:
-      of Leaf:
-        if nextNode.keyHash == keyHash:
-          node.nodes[index].value = value
-        else:
-          res.size -= 1
-          node.nodes[index] = MapNode[K, V](kind: Branch)
-          add(res, node, level + bitsPerPart, nextNode.keyHash, nextNode.key, nextNode.value)
-          add(res, node, level + bitsPerPart, keyHash, key, value)
-        break
-      of Branch:
-        nextNode = copyRef(nextNode)
-        node.nodes[index] = nextNode
-        node = nextNode
-        level += bitsPerPart
+func add[K, V](res: Map[K, V], node: MapNode[K, V], level: int, keyHash: Hash, key: K, value: V) {.raises: []} =
+  let
+    index = (keyHash shr level) and mask
+    child = node.nodes[index]
+  if child == nil:
+    node.nodes[index] = MapNode[K, V](kind: Leaf, keyHash: keyHash, key: key, value: value)
+    res.size += 1
+  else:
+    case child.kind:
+    of Leaf:
+      if child.keyHash == keyHash:
+        node.nodes[index].value = value
+      else:
+        res.size -= 1
+        let newChild = MapNode[K, V](kind: Branch)
+        node.nodes[index] = newChild
+        add(res, newChild, level + bitsPerPart, child.keyHash, child.key, child.value)
+        add(res, newChild, level + bitsPerPart, keyHash, key, value)
+    of Branch:
+      let newChild = copyRef(child)
+      node.nodes[index] = newChild
+      add(res, newChild, level + bitsPerPart, keyHash, key, value)
 
 func add*[K, V](m: Map[K, V], keyHash: Hash, key: K, value: V): Map[K, V] {.raises: []} =
   var res = new Map[K, V]
@@ -72,56 +69,51 @@ func add*[K, V](m: Map[K, V], keyHash: Hash, key: K, value: V): Map[K, V] {.rais
 func add*[K, V](m: Map[K, V], key: K, value: V): Map[K, V] {.raises: []} =
   add(m, hash(key), key, value)
 
-func del[K, V](res: Map[K, V], node: var MapNode[K, V], startLevel: int, keyHash: Hash) {.raises: []} =
-  var level = startLevel
-  while level < hashSize:
-    let index = (keyHash shr level) and mask
-    var nextNode = node.nodes[index]
-    if nextNode == nil:
-      break
-    else:
-      case nextNode.kind:
-      of Leaf:
-        if nextNode.keyHash == keyHash:
-          node.nodes[index] = nil
-          res.size -= 1
-        break
-      of Branch:
-        nextNode = copyRef(nextNode)
-        node.nodes[index] = nextNode
-        node = nextNode
-        level += bitsPerPart
+func del[K, V](res: Map[K, V], node: MapNode[K, V], level: int, keyHash: Hash) {.raises: []} =
+  let
+    index = (keyHash shr level) and mask
+    child = node.nodes[index]
+  if child == nil:
+    discard
+  else:
+    case child.kind:
+    of Leaf:
+      if child.keyHash == keyHash:
+        node.nodes[index] = nil
+        res.size -= 1
+    of Branch:
+      let newChild = copyRef(child)
+      node.nodes[index] = newChild
+      del(res, newChild, level + bitsPerPart, keyHash)
 
 func del*[K, V](m: Map[K, V], keyHash: Hash): Map[K, V] {.raises: []} =
   var res = new Map[K, V]
   res[] = m[]
   res.root = copyRef(m.root)
-  var node = res.root
-  del(res, node, 0, keyHash)
+  del(res, res.root, 0, keyHash)
   res
 
 func del*[K, V](m: Map[K, V], key: K): Map[K, V] =
   del(m, hash(key))
 
+func get[K, V](node: MapNode[K, V], level: int, keyHash: Hash): V {.raises: [KeyError]} =
+  let
+    index = (keyHash shr level) and mask
+    child = node.nodes[index]
+  if child == nil:
+    raise newException(KeyError, "Key not found")
+  else:
+    case child.kind:
+    of Leaf:
+      if child.keyHash == keyHash:
+        child.value
+      else:
+        raise newException(KeyError, "Key not found")
+    of Branch:
+      get(child, level + bitsPerPart, keyHash)
+
 func get*[K, V](m: Map[K, V], keyHash: Hash): V {.raises: [KeyError]} =
-  var node = m.root
-  var level = 0
-  while level < hashSize:
-    let index = (keyHash shr level) and mask
-    var nextNode = node.nodes[index]
-    if nextNode == nil:
-      raise newException(KeyError, "Key not found")
-    else:
-      case nextNode.kind:
-      of Leaf:
-        if nextNode.keyHash == keyHash:
-          return nextNode.value
-        else:
-          raise newException(KeyError, "Key not found")
-      of Branch:
-        node = nextNode
-        level += bitsPerPart
-  raise newException(KeyError, "Key not found")
+  get(m.root, 0, keyHash)
 
 func get*[K, V](m: Map[K, V], key: K): V {.raises: [KeyError]} =
   get(m, hash(key))
@@ -131,6 +123,34 @@ func getOrDefault*[K, V](m: Map[K, V], key: K, default: V): V {.raises: []} =
     get(m, hash(key))
   except KeyError:
     default
+
+iterator pairs*[K, V](m: Map[K, V]): (K, V) =
+  var stack: seq[tuple[parent: MapNode[K, V], index: int]] = @[(m.root, 0)]
+  while stack.len > 0:
+    let (parent, index) = stack[stack.len-1]
+    if index == parent.nodes.len:
+      discard stack.pop()
+      if stack.len > 0:
+        stack[stack.len-1].index += 1
+    else:
+      let node = parent.nodes[index]
+      if node == nil:
+        stack[stack.len-1].index += 1
+      else:
+        case node.kind:
+        of Leaf:
+          yield (node.key, node.value)
+          stack[stack.len-1].index += 1
+        of Branch:
+          stack.add((node, 0))
+
+iterator keys*[K, V](m: Map[K, V]): K =
+  for (k, v) in m.pairs:
+    yield k
+
+iterator values*[K, V](m: Map[K, V]): V =
+  for (k, v) in m.pairs:
+    yield v
 
 ## sets
 
@@ -150,96 +170,106 @@ func initSet*[T](): Set[T] {.raises: []} =
   new result
   result.root = SetNode[T](kind: Branch)
 
-func incl[T](res: Set[T], node: var SetNode[T], startLevel: int, keyHash: Hash, key: T) {.raises: []} =
-  var level = startLevel
-  while level < hashSize:
-    let index = (keyHash shr level) and mask
-    var nextNode = node.nodes[index]
-    if nextNode == nil:
-      node.nodes[index] = SetNode[T](kind: Leaf, keyHash: keyHash, key: key)
-      res.size += 1
-      break
-    else:
-      case nextNode.kind:
-      of Leaf:
-        if nextNode.keyHash == keyHash:
-          discard
-        else:
-          res.size -= 1
-          node.nodes[index] = SetNode[T](kind: Branch)
-          incl(res, node, level + bitsPerPart, nextNode.keyHash, nextNode.key)
-          incl(res, node, level + bitsPerPart, keyHash, key)
-        break
-      of Branch:
-        nextNode = copyRef(nextNode)
-        node.nodes[index] = nextNode
-        node = nextNode
-        level += bitsPerPart
+func incl[T](res: Set[T], node: SetNode[T], level: int, keyHash: Hash, key: T) {.raises: []} =
+  let
+    index = (keyHash shr level) and mask
+    child = node.nodes[index]
+  if child == nil:
+    node.nodes[index] = SetNode[T](kind: Leaf, keyHash: keyHash, key: key)
+    res.size += 1
+  else:
+    case child.kind:
+    of Leaf:
+      if child.keyHash == keyHash:
+        discard
+      else:
+        res.size -= 1
+        let newChild = SetNode[T](kind: Branch)
+        node.nodes[index] = newChild
+        incl(res, newChild, level + bitsPerPart, child.keyHash, child.key)
+        incl(res, newChild, level + bitsPerPart, keyHash, key)
+    of Branch:
+      let newChild = copyRef(child)
+      node.nodes[index] = newChild
+      incl(res, newChild, level + bitsPerPart, keyHash, key)
 
 func incl*[T](s: Set[T], keyHash: Hash, key: T): Set[T] {.raises: []} =
   var res = new Set[T]
   res[] = s[]
   res.root = copyRef(s.root)
-  var node = res.root
-  incl(res, node, 0, keyHash, key)
+  incl(res, res.root, 0, keyHash, key)
   res
 
 func incl*[T](s: Set[T], key: T): Set[T] {.raises: []} =
   incl(s, hash(key), key)
 
-func excl[T](res: Set[T], node: var SetNode[T], startLevel: int, keyHash: Hash) {.raises: []} =
-  var level = startLevel
-  while level < hashSize:
-    let index = (keyHash shr level) and mask
-    var nextNode = node.nodes[index]
-    if nextNode == nil:
-      break
-    else:
-      case nextNode.kind:
-      of Leaf:
-        if nextNode.keyHash == keyHash:
-          node.nodes[index] = nil
-          res.size -= 1
-        break
-      of Branch:
-        nextNode = copyRef(nextNode)
-        node.nodes[index] = nextNode
-        node = nextNode
-        level += bitsPerPart
+func excl[T](res: Set[T], node: SetNode[T], level: int, keyHash: Hash) {.raises: []} =
+  let
+    index = (keyHash shr level) and mask
+    child = node.nodes[index]
+  if child == nil:
+    discard
+  else:
+    case child.kind:
+    of Leaf:
+      if child.keyHash == keyHash:
+        node.nodes[index] = nil
+        res.size -= 1
+    of Branch:
+      let newChild = copyRef(child)
+      node.nodes[index] = newChild
+      excl(res, newChild, level + bitsPerPart, keyHash)
 
 func excl*[T](s: Set[T], keyHash: Hash): Set[T] {.raises: []} =
   var res = new Set[T]
   res[] = s[]
   res.root = copyRef(s.root)
-  var node = res.root
-  excl(res, node, 0, keyHash)
+  excl(res, res.root, 0, keyHash)
   res
 
 func excl*[T](s: Set[T], key: T): Set[T] {.raises: []} =
   excl(s, hash(key))
 
+func contains[T](node: SetNode[T], level: int, keyHash: Hash): bool {.raises: []} =
+  let index = (keyHash shr level) and mask
+  let child = node.nodes[index]
+  if child == nil:
+    false
+  else:
+    case child.kind:
+    of Leaf:
+      if child.keyHash == keyHash:
+        true
+      else:
+        false
+    of Branch:
+      contains(child, level + bitsPerPart, keyHash)
+
 func contains*[T](s: Set[T], keyHash: Hash): bool {.raises: []} =
-  var node = s.root
-  var level = 0
-  while level < hashSize:
-    let index = (keyHash shr level) and mask
-    var nextNode = node.nodes[index]
-    if nextNode == nil:
-      return false
-    else:
-      case nextNode.kind:
-      of Leaf:
-        if nextNode.keyHash == keyHash:
-          return true
-        else:
-          return false
-      of Branch:
-        node = nextNode
-        level += bitsPerPart
-  false
+  contains(s.root, 0, keyHash)
 
 func contains*[T](s: Set[T], key: T): bool {.raises: []} =
   contains(s, hash(key))
+
+iterator items*[T](s: Set[T]): T =
+  var stack: seq[tuple[parent: SetNode[T], index: int]] = @[(s.root, 0)]
+  while stack.len > 0:
+    let (parent, index) = stack[stack.len-1]
+    if index == parent.nodes.len:
+      discard stack.pop()
+      if stack.len > 0:
+        stack[stack.len-1].index += 1
+    else:
+      let node = parent.nodes[index]
+      if node == nil:
+        stack[stack.len-1].index += 1
+      else:
+        case node.kind:
+        of Leaf:
+          yield node.key
+          stack[stack.len-1].index += 1
+        of Branch:
+          stack.add((node, 0))
 
 ## vecs
 
@@ -259,37 +289,34 @@ func initVec*[T](): Vec[T] {.raises: []} =
   new result
   result.root = VecNode[T](kind: Branch)
 
-func add[T](res: Vec[T], node: var VecNode[T], startLevel: int, index: int, value: T) {.raises: []} =
-  var level = startLevel
-  while level >= 0:
-    let index = (index shr level) and mask
-    var nextNode = node.nodes[index]
-    if nextNode == nil:
-      if level == 0:
-        node.nodes[index] = VecNode[T](kind: Leaf, value: value)
-        res.size += 1
-        break
-      else:
-        nextNode = VecNode[T](kind: Branch)
-        node.nodes[index] = nextNode
-        node = nextNode
-        level -= bitsPerPart
+func add[T](res: Vec[T], node: VecNode[T], level: int, key: int, value: T) {.raises: []} =
+  if level < 0:
+    return
+  let
+    index = (key shr level) and mask
+    child = node.nodes[index]
+  if child == nil:
+    if level == 0:
+      node.nodes[index] = VecNode[T](kind: Leaf, value: value)
+      res.size += 1
     else:
-      case nextNode.kind:
-      of Leaf:
-        node.nodes[index].value = value
-        break
-      of Branch:
-        nextNode = copyRef(nextNode)
-        node.nodes[index] = nextNode
-        node = nextNode
-        level -= bitsPerPart
+      let newChild = VecNode[T](kind: Branch)
+      node.nodes[index] = newChild
+      add(res, newChild, level - bitsPerPart, key, value)
+  else:
+    case child.kind:
+    of Leaf:
+      node.nodes[index].value = value
+    of Branch:
+      let newChild = copyRef(child)
+      node.nodes[index] = newChild
+      add(res, newChild, level - bitsPerPart, key, value)
 
-func add*[T](v: Vec[T], index: int, value: T): Vec[T] {.raises: [IndexDefect]} =
-  if index < 0 or index > v.size:
+func add*[T](v: Vec[T], key: int, value: T): Vec[T] {.raises: [IndexDefect]} =
+  if key < 0 or key > v.size:
     raise newException(IndexDefect, "Index is out of bounds")
   var res = new Vec[T]
-  if index == v.size and index == branchWidth ^ (v.shift + 1):
+  if key == v.size and key == branchWidth ^ (v.shift + 1):
     res.root = VecNode[T](kind: Branch)
     res.shift = v.shift + 1
     res.size = v.size
@@ -298,8 +325,7 @@ func add*[T](v: Vec[T], index: int, value: T): Vec[T] {.raises: [IndexDefect]} =
   else:
     res[] = v[]
     res.root = copyRef(v.root)
-  var node = res.root
-  add(res, node, res.shift * bitsPerPart, index, value)
+  add(res, res.root, res.shift * bitsPerPart, key, value)
   res
 
 func add*[T](v: Vec[T], value: T): Vec[T] {.raises: []} =
@@ -308,25 +334,46 @@ func add*[T](v: Vec[T], value: T): Vec[T] {.raises: []} =
   except IndexDefect:
     v
 
-func get*[T](v: Vec[T], index: int): T {.raises: [IndexDefect]} =
-  var node = v.root
-  var level = v.shift * bitsPerPart
-  while level >= 0:
-    let index = (index shr level) and mask
-    var nextNode = node.nodes[index]
-    if nextNode == nil:
-      raise newException(IndexDefect, "Index is out of bounds")
-    else:
-      case nextNode.kind:
-      of Leaf:
-        return nextNode.value
-      of Branch:
-        node = nextNode
-        level -= bitsPerPart
-  raise newException(IndexDefect, "Index is out of bounds")
+func get[T](node: VecNode[T], level: int, key: int): T {.raises: [IndexDefect]} =
+  if level < 0:
+    raise newException(IndexDefect, "Index is out of bounds")
+  let
+    index = (key shr level) and mask
+    child = node.nodes[index]
+  if child == nil:
+    raise newException(IndexDefect, "Index is out of bounds")
+  else:
+    case child.kind:
+    of Leaf:
+      return child.value
+    of Branch:
+      get(child, level - bitsPerPart, key)
 
-func getOrDefault*[T](v: Vec[T], index: int, default: T): T {.raises: []} =
+func get*[T](v: Vec[T], key: int): T {.raises: [IndexDefect]} =
+  get(v.root, v.shift * bitsPerPart, key)
+
+func getOrDefault*[T](v: Vec[T], key: int, default: T): T {.raises: []} =
   try:
-    get(v, index)
+    get(v, key)
   except IndexDefect:
     default
+
+iterator items*[T](v: Vec[T]): T =
+  var stack: seq[tuple[parent: VecNode[T], index: int]] = @[(v.root, 0)]
+  while stack.len > 0:
+    let (parent, index) = stack[stack.len-1]
+    if index == parent.nodes.len:
+      discard stack.pop()
+      if stack.len > 0:
+        stack[stack.len-1].index += 1
+    else:
+      let node = parent.nodes[index]
+      if node == nil:
+        break
+      else:
+        case node.kind:
+        of Leaf:
+          yield node.value
+          stack[stack.len-1].index += 1
+        of Branch:
+          stack.add((node, 0))
