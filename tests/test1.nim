@@ -54,13 +54,16 @@ test "vecs":
   let v5 = v4.add(1, "hello")
   check v5.getOrDefault(0, "") == "goodbye"
   check v5.getOrDefault(1, "") == "hello"
+  var v6 = initVec[string]()
+  for i in 0 .. 1024:
+    v6 = v6.add($i)
+  check v6.size == 1025
+  check v6.getOrDefault(1024, "") == "1024"
 
 import hashes
 
-test "collisions":
+test "partial hash collisions":
   let m = initMap[string, string]().add(Hash(0), "hello").add(Hash(1 shl bitsPerPart), "world")
   let s = initSet[string]().incl(Hash(0)).incl(Hash(1 shl bitsPerPart))
-  let v = initVec[string]().add(0, "hello").add(1 shl bitsPerPart, "world")
   check m.size == 2
   check s.size == 2
-  check v.size == 2
