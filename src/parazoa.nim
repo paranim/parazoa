@@ -31,11 +31,11 @@ type
     root: MapNode[K, V]
     size*: int
 
-func initMap*[K, V](): Map[K, V] {.raises: []} =
+func initMap*[K, V](): Map[K, V]  =
   new result
   result.root = MapNode[K, V](kind: Branch)
 
-func add[K, V](res: Map[K, V], node: MapNode[K, V], level: int, keyHash: Hash, key: K, value: V) {.raises: []} =
+func add[K, V](res: Map[K, V], node: MapNode[K, V], level: int, keyHash: Hash, key: K, value: V)  =
   let
     index = (keyHash shr level) and mask
     child = node.nodes[index]
@@ -58,7 +58,7 @@ func add[K, V](res: Map[K, V], node: MapNode[K, V], level: int, keyHash: Hash, k
       node.nodes[index] = newChild
       add(res, newChild, level + bitsPerPart, keyHash, key, value)
 
-func add*[K, V](m: Map[K, V], keyHash: Hash, key: K, value: V): Map[K, V] {.raises: []} =
+func add*[K, V](m: Map[K, V], keyHash: Hash, key: K, value: V): Map[K, V]  =
   var res = new Map[K, V]
   res[] = m[]
   res.root = copyRef(m.root)
@@ -66,10 +66,10 @@ func add*[K, V](m: Map[K, V], keyHash: Hash, key: K, value: V): Map[K, V] {.rais
   add(res, node, 0, keyHash, key, value)
   res
 
-func add*[K, V](m: Map[K, V], key: K, value: V): Map[K, V] {.raises: []} =
+func add*[K, V](m: Map[K, V], key: K, value: V): Map[K, V]  =
   add(m, hash(key), key, value)
 
-func del[K, V](res: Map[K, V], node: MapNode[K, V], level: int, keyHash: Hash) {.raises: []} =
+func del[K, V](res: Map[K, V], node: MapNode[K, V], level: int, keyHash: Hash)  =
   let
     index = (keyHash shr level) and mask
     child = node.nodes[index]
@@ -86,7 +86,7 @@ func del[K, V](res: Map[K, V], node: MapNode[K, V], level: int, keyHash: Hash) {
       node.nodes[index] = newChild
       del(res, newChild, level + bitsPerPart, keyHash)
 
-func del*[K, V](m: Map[K, V], keyHash: Hash): Map[K, V] {.raises: []} =
+func del*[K, V](m: Map[K, V], keyHash: Hash): Map[K, V]  =
   var res = new Map[K, V]
   res[] = m[]
   res.root = copyRef(m.root)
@@ -96,7 +96,7 @@ func del*[K, V](m: Map[K, V], keyHash: Hash): Map[K, V] {.raises: []} =
 func del*[K, V](m: Map[K, V], key: K): Map[K, V] =
   del(m, hash(key))
 
-func get[K, V](node: MapNode[K, V], level: int, keyHash: Hash): V {.raises: [KeyError]} =
+func get[K, V](node: MapNode[K, V], level: int, keyHash: Hash): V =
   let
     index = (keyHash shr level) and mask
     child = node.nodes[index]
@@ -112,19 +112,19 @@ func get[K, V](node: MapNode[K, V], level: int, keyHash: Hash): V {.raises: [Key
     of Branch:
       get(child, level + bitsPerPart, keyHash)
 
-func get*[K, V](m: Map[K, V], keyHash: Hash): V {.raises: [KeyError]} =
+func get*[K, V](m: Map[K, V], keyHash: Hash): V =
   get(m.root, 0, keyHash)
 
-func get*[K, V](m: Map[K, V], key: K): V {.raises: [KeyError]} =
+func get*[K, V](m: Map[K, V], key: K): V =
   get(m, hash(key))
 
-func getOrDefault*[K, V](m: Map[K, V], key: K, default: V): V {.raises: []} =
+func getOrDefault*[K, V](m: Map[K, V], key: K, default: V): V  =
   try:
     get(m, hash(key))
   except KeyError:
     default
 
-func contains*[K, V](m: Map[K, V], key: K): bool {.raises: []} =
+func contains*[K, V](m: Map[K, V], key: K): bool  =
   try:
     discard get(m, key)
     true
@@ -159,7 +159,7 @@ iterator values*[K, V](m: Map[K, V]): V =
   for (k, v) in m.pairs:
     yield v
 
-func `==`*[K, V](m1: Map[K, V], m2: Map[K, V]): bool {.raises: [].} =
+func `==`*[K, V](m1: Map[K, V], m2: Map[K, V]): bool  =
   if not m1.isNil and not m2.isNil:
     if m1.size != m2.size:
       false
@@ -190,11 +190,11 @@ type
     root: SetNode[T]
     size*: int
 
-func initSet*[T](): Set[T] {.raises: []} =
+func initSet*[T](): Set[T]  =
   new result
   result.root = SetNode[T](kind: Branch)
 
-func incl[T](res: Set[T], node: SetNode[T], level: int, keyHash: Hash, key: T) {.raises: []} =
+func incl[T](res: Set[T], node: SetNode[T], level: int, keyHash: Hash, key: T)  =
   let
     index = (keyHash shr level) and mask
     child = node.nodes[index]
@@ -217,17 +217,17 @@ func incl[T](res: Set[T], node: SetNode[T], level: int, keyHash: Hash, key: T) {
       node.nodes[index] = newChild
       incl(res, newChild, level + bitsPerPart, keyHash, key)
 
-func incl*[T](s: Set[T], keyHash: Hash, key: T): Set[T] {.raises: []} =
+func incl*[T](s: Set[T], keyHash: Hash, key: T): Set[T]  =
   var res = new Set[T]
   res[] = s[]
   res.root = copyRef(s.root)
   incl(res, res.root, 0, keyHash, key)
   res
 
-func incl*[T](s: Set[T], key: T): Set[T] {.raises: []} =
+func incl*[T](s: Set[T], key: T): Set[T]  =
   incl(s, hash(key), key)
 
-func excl[T](res: Set[T], node: SetNode[T], level: int, keyHash: Hash) {.raises: []} =
+func excl[T](res: Set[T], node: SetNode[T], level: int, keyHash: Hash)  =
   let
     index = (keyHash shr level) and mask
     child = node.nodes[index]
@@ -244,17 +244,17 @@ func excl[T](res: Set[T], node: SetNode[T], level: int, keyHash: Hash) {.raises:
       node.nodes[index] = newChild
       excl(res, newChild, level + bitsPerPart, keyHash)
 
-func excl*[T](s: Set[T], keyHash: Hash): Set[T] {.raises: []} =
+func excl*[T](s: Set[T], keyHash: Hash): Set[T]  =
   var res = new Set[T]
   res[] = s[]
   res.root = copyRef(s.root)
   excl(res, res.root, 0, keyHash)
   res
 
-func excl*[T](s: Set[T], key: T): Set[T] {.raises: []} =
+func excl*[T](s: Set[T], key: T): Set[T]  =
   excl(s, hash(key))
 
-func contains[T](node: SetNode[T], level: int, keyHash: Hash): bool {.raises: []} =
+func contains[T](node: SetNode[T], level: int, keyHash: Hash): bool  =
   let index = (keyHash shr level) and mask
   let child = node.nodes[index]
   if child == nil:
@@ -269,10 +269,10 @@ func contains[T](node: SetNode[T], level: int, keyHash: Hash): bool {.raises: []
     of Branch:
       contains(child, level + bitsPerPart, keyHash)
 
-func contains*[T](s: Set[T], keyHash: Hash): bool {.raises: []} =
+func contains*[T](s: Set[T], keyHash: Hash): bool  =
   contains(s.root, 0, keyHash)
 
-func contains*[T](s: Set[T], key: T): bool {.raises: []} =
+func contains*[T](s: Set[T], key: T): bool  =
   contains(s, hash(key))
 
 iterator items*[T](s: Set[T]): T =
@@ -295,7 +295,7 @@ iterator items*[T](s: Set[T]): T =
         of Branch:
           stack.add((node, 0))
 
-func `==`*[T](s1: Set[T], s2: Set[T]): bool {.raises: [].} =
+func `==`*[T](s1: Set[T], s2: Set[T]): bool  =
   if not s1.isNil and not s2.isNil:
     if s1.size != s2.size:
       false
@@ -323,11 +323,11 @@ type
     shift: int
     size*: int
 
-func initVec*[T](): Vec[T] {.raises: []} =
+func initVec*[T](): Vec[T]  =
   new result
   result.root = VecNode[T](kind: Branch)
 
-func add[T](res: Vec[T], node: VecNode[T], level: int, key: int, value: T) {.raises: []} =
+func add[T](res: Vec[T], node: VecNode[T], level: int, key: int, value: T)  =
   if level < 0:
     return
   let
@@ -350,7 +350,7 @@ func add[T](res: Vec[T], node: VecNode[T], level: int, key: int, value: T) {.rai
       node.nodes[index] = newChild
       add(res, newChild, level - bitsPerPart, key, value)
 
-func add*[T](v: Vec[T], key: int, value: T): Vec[T] {.raises: [IndexDefect]} =
+func add*[T](v: Vec[T], key: int, value: T): Vec[T] =
   if key < 0 or key > v.size:
     raise newException(IndexDefect, "Index is out of bounds")
   var res = new Vec[T]
@@ -366,13 +366,13 @@ func add*[T](v: Vec[T], key: int, value: T): Vec[T] {.raises: [IndexDefect]} =
   add(res, res.root, res.shift * bitsPerPart, key, value)
   res
 
-func add*[T](v: Vec[T], value: T): Vec[T] {.raises: []} =
+func add*[T](v: Vec[T], value: T): Vec[T]  =
   try:
     add(v, v.size, value)
   except IndexDefect:
     v
 
-func get[T](node: VecNode[T], level: int, key: int): T {.raises: [IndexDefect]} =
+func get[T](node: VecNode[T], level: int, key: int): T =
   if level < 0:
     raise newException(IndexDefect, "Index is out of bounds")
   let
@@ -387,10 +387,10 @@ func get[T](node: VecNode[T], level: int, key: int): T {.raises: [IndexDefect]} 
     of Branch:
       get(child, level - bitsPerPart, key)
 
-func get*[T](v: Vec[T], key: int): T {.raises: [IndexDefect]} =
+func get*[T](v: Vec[T], key: int): T =
   get(v.root, v.shift * bitsPerPart, key)
 
-func getOrDefault*[T](v: Vec[T], key: int, default: T): T {.raises: []} =
+func getOrDefault*[T](v: Vec[T], key: int, default: T): T  =
   try:
     get(v, key)
   except IndexDefect:
@@ -422,7 +422,7 @@ iterator items*[T](v: Vec[T]): T =
   for (i, v) in v.pairs:
     yield v
 
-func `==`*[T](v1: Vec[T], v2: Vec[T]): bool {.raises: [].} =
+func `==`*[T](v1: Vec[T], v2: Vec[T]): bool  =
   if not v1.isNil and not v2.isNil:
     if v1.size != v2.size:
       false
