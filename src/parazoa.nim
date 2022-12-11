@@ -27,15 +27,14 @@ type
       value: V
     of Branch:
       nodes: array[branchWidth, MapNode[K, V]]
-  Map*[K, V] = ref object
+  Map*[K, V] = object
     root: MapNode[K, V]
     size*: int
 
 func initMap*[K, V](): Map[K, V]  =
-  new result
   result.root = MapNode[K, V](kind: Branch)
 
-func add[K, V](res: Map[K, V], node: MapNode[K, V], level: int, keyHash: Hash, key: K, value: V)  =
+func add[K, V](res: var Map[K, V], node: MapNode[K, V], level: int, keyHash: Hash, key: K, value: V)  =
   let
     index = (keyHash shr level) and mask
     child = node.nodes[index]
@@ -59,8 +58,7 @@ func add[K, V](res: Map[K, V], node: MapNode[K, V], level: int, keyHash: Hash, k
       add(res, newChild, level + bitsPerPart, keyHash, key, value)
 
 func add*[K, V](m: Map[K, V], keyHash: Hash, key: K, value: V): Map[K, V]  =
-  var res = new Map[K, V]
-  res[] = m[]
+  var res = m
   res.root = copyRef(m.root)
   var node = res.root
   add(res, node, 0, keyHash, key, value)
@@ -69,7 +67,7 @@ func add*[K, V](m: Map[K, V], keyHash: Hash, key: K, value: V): Map[K, V]  =
 func add*[K, V](m: Map[K, V], key: K, value: V): Map[K, V]  =
   add(m, hash(key), key, value)
 
-func del[K, V](res: Map[K, V], node: MapNode[K, V], level: int, keyHash: Hash)  =
+func del[K, V](res: var Map[K, V], node: MapNode[K, V], level: int, keyHash: Hash)  =
   let
     index = (keyHash shr level) and mask
     child = node.nodes[index]
@@ -87,8 +85,7 @@ func del[K, V](res: Map[K, V], node: MapNode[K, V], level: int, keyHash: Hash)  
       del(res, newChild, level + bitsPerPart, keyHash)
 
 func del*[K, V](m: Map[K, V], keyHash: Hash): Map[K, V]  =
-  var res = new Map[K, V]
-  res[] = m[]
+  var res = m
   res.root = copyRef(m.root)
   del(res, res.root, 0, keyHash)
   res
@@ -160,21 +157,18 @@ iterator values*[K, V](m: Map[K, V]): V =
     yield v
 
 func `==`*[K, V](m1: Map[K, V], m2: Map[K, V]): bool  =
-  if not m1.isNil and not m2.isNil:
-    if m1.size != m2.size:
-      false
-    elif m1.root.unsafeAddr == m2.root.unsafeAddr:
-      true
-    else:
-      for (k, v) in m1.pairs:
-        try:
-          if m2.get(k) != v:
-            return false
-        except KeyError:
-          return false
-      true
+  if m1.size != m2.size:
+    false
+  elif m1.root.unsafeAddr == m2.root.unsafeAddr:
+    true
   else:
-    m1.isNil == m2.isNil
+    for (k, v) in m1.pairs:
+      try:
+        if m2.get(k) != v:
+          return false
+      except KeyError:
+        return false
+    true
 
 ## sets
 
@@ -186,15 +180,14 @@ type
       key: T
     of Branch:
       nodes: array[branchWidth, SetNode[T]]
-  Set*[T] = ref object
+  Set*[T] = object
     root: SetNode[T]
     size*: int
 
 func initSet*[T](): Set[T]  =
-  new result
   result.root = SetNode[T](kind: Branch)
 
-func incl[T](res: Set[T], node: SetNode[T], level: int, keyHash: Hash, key: T)  =
+func incl[T](res: var Set[T], node: SetNode[T], level: int, keyHash: Hash, key: T)  =
   let
     index = (keyHash shr level) and mask
     child = node.nodes[index]
@@ -218,8 +211,7 @@ func incl[T](res: Set[T], node: SetNode[T], level: int, keyHash: Hash, key: T)  
       incl(res, newChild, level + bitsPerPart, keyHash, key)
 
 func incl*[T](s: Set[T], keyHash: Hash, key: T): Set[T]  =
-  var res = new Set[T]
-  res[] = s[]
+  var res = s
   res.root = copyRef(s.root)
   incl(res, res.root, 0, keyHash, key)
   res
@@ -227,7 +219,7 @@ func incl*[T](s: Set[T], keyHash: Hash, key: T): Set[T]  =
 func incl*[T](s: Set[T], key: T): Set[T]  =
   incl(s, hash(key), key)
 
-func excl[T](res: Set[T], node: SetNode[T], level: int, keyHash: Hash)  =
+func excl[T](res: var Set[T], node: SetNode[T], level: int, keyHash: Hash)  =
   let
     index = (keyHash shr level) and mask
     child = node.nodes[index]
@@ -245,8 +237,7 @@ func excl[T](res: Set[T], node: SetNode[T], level: int, keyHash: Hash)  =
       excl(res, newChild, level + bitsPerPart, keyHash)
 
 func excl*[T](s: Set[T], keyHash: Hash): Set[T]  =
-  var res = new Set[T]
-  res[] = s[]
+  var res = s
   res.root = copyRef(s.root)
   excl(res, res.root, 0, keyHash)
   res
@@ -296,18 +287,15 @@ iterator items*[T](s: Set[T]): T =
           stack.add((node, 0))
 
 func `==`*[T](s1: Set[T], s2: Set[T]): bool  =
-  if not s1.isNil and not s2.isNil:
-    if s1.size != s2.size:
-      false
-    elif s1.root.unsafeAddr == s2.root.unsafeAddr:
-      true
-    else:
-      for k in s1.items:
-        if not s2.contains(k):
-          return false
-      true
+  if s1.size != s2.size:
+    false
+  elif s1.root.unsafeAddr == s2.root.unsafeAddr:
+    true
   else:
-    s1.isNil == s2.isNil
+    for k in s1.items:
+      if not s2.contains(k):
+        return false
+    true
 
 ## vecs
 
@@ -318,16 +306,15 @@ type
       value: T
     of Branch:
       nodes: array[branchWidth, VecNode[T]]
-  Vec*[T] = ref object
+  Vec*[T] = object
     root: VecNode[T]
     shift: int
     size*: int
 
 func initVec*[T](): Vec[T]  =
-  new result
   result.root = VecNode[T](kind: Branch)
 
-func add[T](res: Vec[T], node: VecNode[T], level: int, key: int, value: T)  =
+func add[T](res: var Vec[T], node: VecNode[T], level: int, key: int, value: T)  =
   if level < 0:
     return
   let
@@ -353,7 +340,7 @@ func add[T](res: Vec[T], node: VecNode[T], level: int, key: int, value: T)  =
 func add*[T](v: Vec[T], key: int, value: T): Vec[T] =
   if key < 0 or key > v.size:
     raise newException(IndexDefect, "Index is out of bounds")
-  var res = new Vec[T]
+  var res = v
   if key == v.size and key == branchWidth ^ (v.shift + 1):
     res.root = VecNode[T](kind: Branch)
     res.shift = v.shift + 1
@@ -361,7 +348,6 @@ func add*[T](v: Vec[T], key: int, value: T): Vec[T] =
     let index = ((res.size-1) shr (res.shift * bitsPerPart)) and mask
     res.root.nodes[index] = v.root
   else:
-    res[] = v[]
     res.root = copyRef(v.root)
   add(res, res.root, res.shift * bitsPerPart, key, value)
   res
@@ -423,15 +409,12 @@ iterator items*[T](v: Vec[T]): T =
     yield v
 
 func `==`*[T](v1: Vec[T], v2: Vec[T]): bool  =
-  if not v1.isNil and not v2.isNil:
-    if v1.size != v2.size:
-      false
-    elif v1.root.unsafeAddr == v2.root.unsafeAddr:
-      true
-    else:
-      for (i, v) in v1.pairs:
-        if v2.get(i) != v:
-          return false
-      true
+  if v1.size != v2.size:
+    false
+  elif v1.root.unsafeAddr == v2.root.unsafeAddr:
+    true
   else:
-    v1.isNil == v2.isNil
+    for (i, v) in v1.pairs:
+      if v2.get(i) != v:
+        return false
+    true

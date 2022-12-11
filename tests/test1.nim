@@ -47,7 +47,6 @@ test "maps":
     m9 = m9.add(v, v)
   check m9.size == 1025
   # equality
-  check m1 != nil
   check m1 == m1
   check m1 != m2
   check m8 == m9
@@ -80,7 +79,6 @@ test "sets":
     s7 = s7.incl(k)
   check s7.size == 1025
   # equality
-  check s1 != nil
   check s1 == s1
   check s1 != s2
   check s6 == s7
@@ -118,7 +116,6 @@ test "vecs":
     v7 = v7.add(v)
   check v7.size == 1025
   # equality
-  check v1 != nil
   check v1 == v1
   check v1 != v2
   check v6 == v7
