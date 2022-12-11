@@ -9,7 +9,7 @@ const
   hashSize = sizeof(Hash) * 8
 
 type
-  NodeKind* = enum
+  NodeKind = enum
     Branch,
     Leaf,
 
