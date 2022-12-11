@@ -125,9 +125,9 @@ import hashes
 test "partial hash collisions":
   let m = initMap[string, string]()
             .add(Hash(0), "foo", "hello")
-            .add(Hash(1 shl bitsPerPart), "foo", "world")
+            .add(Hash(1 shl parazoaBits), "foo", "world")
   let s = initSet[string]()
             .incl(Hash(0), "foo")
-            .incl(Hash(1 shl bitsPerPart), "foo")
+            .incl(Hash(1 shl parazoaBits), "foo")
   check m.len == 2
   check s.len == 2

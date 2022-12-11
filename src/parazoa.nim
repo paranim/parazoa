@@ -3,8 +3,8 @@ from math import `^`
 from strutils import nil
 
 const
-  bitsPerPart* {.intdefine.} = 5
-  branchWidth = 1 shl bitsPerPart
+  parazoaBits* {.intdefine.} = 5
+  branchWidth = 1 shl parazoaBits
   mask = branchWidth - 1
   hashSize = sizeof(Hash) * 8
 
@@ -53,7 +53,7 @@ func add[K, V](res: var Map[K, V], node: MapNode[K, V], level: int, keyHash: Has
     of Branch:
       let newChild = copyRef(child)
       node.nodes[index] = newChild
-      add(res, newChild, level + bitsPerPart, keyHash, key, value)
+      add(res, newChild, level + parazoaBits, keyHash, key, value)
     of Leaf:
       if child.keyHash == keyHash:
         node.nodes[index].value = value
@@ -61,8 +61,8 @@ func add[K, V](res: var Map[K, V], node: MapNode[K, V], level: int, keyHash: Has
         res.size -= 1
         let newChild = MapNode[K, V](kind: Branch)
         node.nodes[index] = newChild
-        add(res, newChild, level + bitsPerPart, child.keyHash, child.key, child.value)
-        add(res, newChild, level + bitsPerPart, keyHash, key, value)
+        add(res, newChild, level + parazoaBits, child.keyHash, child.key, child.value)
+        add(res, newChild, level + parazoaBits, keyHash, key, value)
 
 func add*[K, V](m: Map[K, V], keyHash: Hash, key: K, value: V): Map[K, V]  =
   var res = m
@@ -85,7 +85,7 @@ func del[K, V](res: var Map[K, V], node: MapNode[K, V], level: int, keyHash: Has
     of Branch:
       let newChild = copyRef(child)
       node.nodes[index] = newChild
-      del(res, newChild, level + bitsPerPart, keyHash)
+      del(res, newChild, level + parazoaBits, keyHash)
     of Leaf:
       if child.keyHash == keyHash:
         node.nodes[index] = nil
@@ -109,7 +109,7 @@ func get[K, V](node: MapNode[K, V], level: int, keyHash: Hash): V =
   else:
     case child.kind:
     of Branch:
-      get(child, level + bitsPerPart, keyHash)
+      get(child, level + parazoaBits, keyHash)
     of Leaf:
       if child.keyHash == keyHash:
         child.value
@@ -237,7 +237,7 @@ func incl[T](res: var Set[T], node: SetNode[T], level: int, keyHash: Hash, key: 
     of Branch:
       let newChild = copyRef(child)
       node.nodes[index] = newChild
-      incl(res, newChild, level + bitsPerPart, keyHash, key)
+      incl(res, newChild, level + parazoaBits, keyHash, key)
     of Leaf:
       if child.keyHash == keyHash:
         discard
@@ -245,8 +245,8 @@ func incl[T](res: var Set[T], node: SetNode[T], level: int, keyHash: Hash, key: 
         res.size -= 1
         let newChild = SetNode[T](kind: Branch)
         node.nodes[index] = newChild
-        incl(res, newChild, level + bitsPerPart, child.keyHash, child.key)
-        incl(res, newChild, level + bitsPerPart, keyHash, key)
+        incl(res, newChild, level + parazoaBits, child.keyHash, child.key)
+        incl(res, newChild, level + parazoaBits, keyHash, key)
 
 func incl*[T](s: Set[T], keyHash: Hash, key: T): Set[T]  =
   var res = s
@@ -268,7 +268,7 @@ func excl[T](res: var Set[T], node: SetNode[T], level: int, keyHash: Hash)  =
     of Branch:
       let newChild = copyRef(child)
       node.nodes[index] = newChild
-      excl(res, newChild, level + bitsPerPart, keyHash)
+      excl(res, newChild, level + parazoaBits, keyHash)
     of Leaf:
       if child.keyHash == keyHash:
         node.nodes[index] = nil
@@ -291,7 +291,7 @@ func contains[T](node: SetNode[T], level: int, keyHash: Hash): bool  =
   else:
     case child.kind:
     of Branch:
-      contains(child, level + bitsPerPart, keyHash)
+      contains(child, level + parazoaBits, keyHash)
     of Leaf:
       if child.keyHash == keyHash:
         true
@@ -395,13 +395,13 @@ func add[T](res: var Vec[T], node: VecNode[T], level: int, key: int, value: T)  
     else:
       let newChild = VecNode[T](kind: Branch)
       node.nodes[index] = newChild
-      add(res, newChild, level - bitsPerPart, key, value)
+      add(res, newChild, level - parazoaBits, key, value)
   else:
     case child.kind:
     of Branch:
       let newChild = copyRef(child)
       node.nodes[index] = newChild
-      add(res, newChild, level - bitsPerPart, key, value)
+      add(res, newChild, level - parazoaBits, key, value)
     of Leaf:
       node.nodes[index].value = value
 
@@ -413,11 +413,11 @@ func add*[T](v: Vec[T], key: int, value: T): Vec[T] =
     res.root = VecNode[T](kind: Branch)
     res.shift = v.shift + 1
     res.size = v.len
-    let index = ((res.size-1) shr (res.shift * bitsPerPart)) and mask
+    let index = ((res.size-1) shr (res.shift * parazoaBits)) and mask
     res.root.nodes[index] = v.root
   else:
     res.root = copyRef(v.root)
-  add(res, res.root, res.shift * bitsPerPart, key, value)
+  add(res, res.root, res.shift * parazoaBits, key, value)
   res
 
 func add*[T](v: Vec[T], value: T): Vec[T]  =
@@ -437,12 +437,12 @@ func get[T](node: VecNode[T], level: int, key: int): T =
   else:
     case child.kind:
     of Branch:
-      get(child, level - bitsPerPart, key)
+      get(child, level - parazoaBits, key)
     of Leaf:
       return child.value
 
 func get*[T](v: Vec[T], key: int): T =
-  get(v.root, v.shift * bitsPerPart, key)
+  get(v.root, v.shift * parazoaBits, key)
 
 func getOrDefault*[T](v: Vec[T], key: int, default: T): T  =
   try:
