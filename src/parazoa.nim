@@ -124,6 +124,13 @@ func getOrDefault*[K, V](m: Map[K, V], key: K, default: V): V {.raises: []} =
   except KeyError:
     default
 
+func contains*[K, V](m: Map[K, V], key: K): bool {.raises: []} =
+  try:
+    discard get(m, key)
+    true
+  except KeyError:
+    false
+
 iterator pairs*[K, V](m: Map[K, V]): (K, V) =
   var stack: seq[tuple[parent: MapNode[K, V], index: int]] = @[(m.root, 0)]
   while stack.len > 0:

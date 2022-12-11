@@ -6,6 +6,7 @@ test "maps":
   let m2 = m1.add("hello", "world")
   check m1.getOrDefault("hello", "") == ""
   check m2.getOrDefault("hello", "") == "world"
+  check m2.contains("hello")
   expect(KeyError):
     discard m1.get("hello")
   check m2.get("hello") == "world"
