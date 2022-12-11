@@ -382,8 +382,6 @@ func len*[T](v: Vec[T]): int =
   v.size
 
 func add[T](res: var Vec[T], node: VecNode[T], level: int, key: int, value: T)  =
-  if level < 0:
-    return
   let
     index = (key shr level) and mask
     child = node.nodes[index]
@@ -426,8 +424,6 @@ func add*[T](v: Vec[T], value: T): Vec[T]  =
     v
 
 func get[T](node: VecNode[T], level: int, key: int): T =
-  if level < 0:
-    raise newException(IndexDefect, "Index is out of bounds")
   let
     index = (key shr level) and mask
     child = node.nodes[index]
