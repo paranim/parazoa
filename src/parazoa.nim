@@ -420,9 +420,6 @@ func add*[T](v: Vec[T], key: int, value: T): Vec[T] =
   add(res, res.root, res.shift * bitsPerPart, key, value)
   res
 
-func add*[T](v: Vec[T], key: int64, value: T): Vec[T] =
-  add(v, key.int, value)
-
 func add*[T](v: Vec[T], value: T): Vec[T]  =
   try:
     add(v, v.len, value)
@@ -452,12 +449,6 @@ func getOrDefault*[T](v: Vec[T], key: int, default: T): T  =
     get(v, key)
   except IndexDefect:
     default
-
-func get*[T](v: Vec[T], key: int64): T =
-  get(v, key.int)
-
-func getOrDefault*[T](v: Vec[T], key: int64, default: T): T  =
-  getOrDefault(v, key.int, default)
 
 iterator pairs*[T](v: Vec[T]): (int, T) =
   var stack: seq[tuple[parent: VecNode[T], index: int]] = @[(v.root, 0)]
