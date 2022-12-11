@@ -159,6 +159,23 @@ iterator values*[K, V](m: Map[K, V]): V =
   for (k, v) in m.pairs:
     yield v
 
+func `==`*[K, V](m1: Map[K, V], m2: Map[K, V]): bool {.raises: [].} =
+  if not m1.isNil and not m2.isNil:
+    if m1.size != m2.size:
+      false
+    elif m1.root.unsafeAddr == m2.root.unsafeAddr:
+      true
+    else:
+      for (k, v) in m1.pairs:
+        try:
+          if m2.get(k) != v:
+            return false
+        except KeyError:
+          return false
+      true
+  else:
+    m1.isNil == m2.isNil
+
 ## sets
 
 type
@@ -278,6 +295,20 @@ iterator items*[T](s: Set[T]): T =
         of Branch:
           stack.add((node, 0))
 
+func `==`*[T](s1: Set[T], s2: Set[T]): bool {.raises: [].} =
+  if not s1.isNil and not s2.isNil:
+    if s1.size != s2.size:
+      false
+    elif s1.root.unsafeAddr == s2.root.unsafeAddr:
+      true
+    else:
+      for k in s1.items:
+        if not s2.contains(k):
+          return false
+      true
+  else:
+    s1.isNil == s2.isNil
+
 ## vecs
 
 type
@@ -365,8 +396,9 @@ func getOrDefault*[T](v: Vec[T], key: int, default: T): T {.raises: []} =
   except IndexDefect:
     default
 
-iterator items*[T](v: Vec[T]): T =
+iterator pairs*[T](v: Vec[T]): (int, T) =
   var stack: seq[tuple[parent: VecNode[T], index: int]] = @[(v.root, 0)]
+  var key = 0
   while stack.len > 0:
     let (parent, index) = stack[stack.len-1]
     if index == parent.nodes.len:
@@ -380,7 +412,26 @@ iterator items*[T](v: Vec[T]): T =
       else:
         case node.kind:
         of Leaf:
-          yield node.value
+          yield (key, node.value)
           stack[stack.len-1].index += 1
+          key += 1
         of Branch:
           stack.add((node, 0))
+
+iterator items*[T](v: Vec[T]): T =
+  for (i, v) in v.pairs:
+    yield v
+
+func `==`*[T](v1: Vec[T], v2: Vec[T]): bool {.raises: [].} =
+  if not v1.isNil and not v2.isNil:
+    if v1.size != v2.size:
+      false
+    elif v1.root.unsafeAddr == v2.root.unsafeAddr:
+      true
+    else:
+      for (i, v) in v1.pairs:
+        if v2.get(i) != v:
+          return false
+      true
+  else:
+    v1.isNil == v2.isNil
