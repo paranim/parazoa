@@ -33,10 +33,13 @@ type
       value: V
   Map*[K, V] = object
     root: MapNode[K, V]
-    len*: int
+    size: int
 
 func initMap*[K, V](): Map[K, V]  =
   result.root = MapNode[K, V](kind: Branch)
+
+func len*[K, V](m: Map[K, V]): int =
+  m.size
 
 func add[K, V](res: var Map[K, V], node: MapNode[K, V], level: int, keyHash: Hash, key: K, value: V)  =
   let
@@ -44,7 +47,7 @@ func add[K, V](res: var Map[K, V], node: MapNode[K, V], level: int, keyHash: Has
     child = node.nodes[index]
   if child == nil:
     node.nodes[index] = MapNode[K, V](kind: Leaf, keyHash: keyHash, key: key, value: value)
-    res.len += 1
+    res.size += 1
   else:
     case child.kind:
     of Branch:
@@ -55,7 +58,7 @@ func add[K, V](res: var Map[K, V], node: MapNode[K, V], level: int, keyHash: Has
       if child.keyHash == keyHash:
         node.nodes[index].value = value
       else:
-        res.len -= 1
+        res.size -= 1
         let newChild = MapNode[K, V](kind: Branch)
         node.nodes[index] = newChild
         add(res, newChild, level + bitsPerPart, child.keyHash, child.key, child.value)
@@ -86,7 +89,7 @@ func del[K, V](res: var Map[K, V], node: MapNode[K, V], level: int, keyHash: Has
     of Leaf:
       if child.keyHash == keyHash:
         node.nodes[index] = nil
-        res.len -= 1
+        res.size -= 1
 
 func del*[K, V](m: Map[K, V], keyHash: Hash): Map[K, V]  =
   var res = m
@@ -214,10 +217,13 @@ type
       key: T
   Set*[T] = object
     root: SetNode[T]
-    len*: int
+    size: int
 
 func initSet*[T](): Set[T]  =
   result.root = SetNode[T](kind: Branch)
+
+func len*[T](s: Set[T]): int =
+  s.size
 
 func incl[T](res: var Set[T], node: SetNode[T], level: int, keyHash: Hash, key: T)  =
   let
@@ -225,7 +231,7 @@ func incl[T](res: var Set[T], node: SetNode[T], level: int, keyHash: Hash, key: 
     child = node.nodes[index]
   if child == nil:
     node.nodes[index] = SetNode[T](kind: Leaf, keyHash: keyHash, key: key)
-    res.len += 1
+    res.size += 1
   else:
     case child.kind:
     of Branch:
@@ -236,7 +242,7 @@ func incl[T](res: var Set[T], node: SetNode[T], level: int, keyHash: Hash, key: 
       if child.keyHash == keyHash:
         discard
       else:
-        res.len -= 1
+        res.size -= 1
         let newChild = SetNode[T](kind: Branch)
         node.nodes[index] = newChild
         incl(res, newChild, level + bitsPerPart, child.keyHash, child.key)
@@ -266,7 +272,7 @@ func excl[T](res: var Set[T], node: SetNode[T], level: int, keyHash: Hash)  =
     of Leaf:
       if child.keyHash == keyHash:
         node.nodes[index] = nil
-        res.len -= 1
+        res.size -= 1
 
 func excl*[T](s: Set[T], keyHash: Hash): Set[T]  =
   var res = s
@@ -368,10 +374,13 @@ type
   Vec*[T] = object
     root: VecNode[T]
     shift: int
-    len*: int
+    size: int
 
 func initVec*[T](): Vec[T]  =
   result.root = VecNode[T](kind: Branch)
+
+func len*[T](v: Vec[T]): int =
+  v.size
 
 func add[T](res: var Vec[T], node: VecNode[T], level: int, key: int, value: T)  =
   if level < 0:
@@ -382,7 +391,7 @@ func add[T](res: var Vec[T], node: VecNode[T], level: int, key: int, value: T)  
   if child == nil:
     if level == 0:
       node.nodes[index] = VecNode[T](kind: Leaf, value: value)
-      res.len += 1
+      res.size += 1
     else:
       let newChild = VecNode[T](kind: Branch)
       node.nodes[index] = newChild
@@ -403,8 +412,8 @@ func add*[T](v: Vec[T], key: int, value: T): Vec[T] =
   if key == v.len and key == branchWidth ^ (v.shift + 1):
     res.root = VecNode[T](kind: Branch)
     res.shift = v.shift + 1
-    res.len = v.len
-    let index = ((res.len-1) shr (res.shift * bitsPerPart)) and mask
+    res.size = v.len
+    let index = ((res.size-1) shr (res.shift * bitsPerPart)) and mask
     res.root.nodes[index] = v.root
   else:
     res.root = copyRef(v.root)
