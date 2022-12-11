@@ -174,7 +174,6 @@ func `==`*[K, V](m1: Map[K, V], m2: Map[K, V]): bool  =
         if m2.get(k) != v:
           return false
       except KeyError:
-        debugecho k, " ", hash(k)
         return false
     true
 
