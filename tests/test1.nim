@@ -1,5 +1,6 @@
 import unittest
-import parazoa
+
+include parazoa
 
 test "maps":
   let m1 = initMap[string, string]()
@@ -121,6 +122,14 @@ test "vecs":
   check v1 != v2
   check v4 != v5
   check v6 == v7
+  # setLen
+  check v3 == v4.setLen(v3.len)
+  let v8 = v2.setLen(1025).add(1024, "foo").setLen(1024).setLen(1025)
+  check v8.get(1024) == ""
+  check v8.shift == 2
+  let v9 = v8.setLen(50).add(49, "foo").setLen(49).setLen(50)
+  check v9.get(49) == ""
+  check v9.shift == 1
 
 import hashes
 

@@ -64,7 +64,7 @@ func add[K, V](res: var Map[K, V], node: MapNode[K, V], level: int, keyHash: Has
         add(res, newChild, level + parazoaBits, child.keyHash, child.key, child.value)
         add(res, newChild, level + parazoaBits, keyHash, key, value)
 
-func add*[K, V](m: Map[K, V], keyHash: Hash, key: K, value: V): Map[K, V]  =
+func add[K, V](m: Map[K, V], keyHash: Hash, key: K, value: V): Map[K, V]  =
   var res = m
   res.root = copyRef(m.root)
   var node = res.root
@@ -122,11 +122,11 @@ func get*[K, V](m: Map[K, V], keyHash: Hash): V =
 func get*[K, V](m: Map[K, V], key: K): V =
   get(m, hash(key))
 
-func getOrDefault*[K, V](m: Map[K, V], key: K, default: V): V  =
+func getOrDefault*[K, V](m: Map[K, V], key: K, defaultValue: V): V  =
   try:
     get(m, hash(key))
   except KeyError:
-    default
+    defaultValue
 
 func contains*[K, V](m: Map[K, V], key: K): bool  =
   try:
@@ -247,7 +247,7 @@ func incl[T](res: var Set[T], node: SetNode[T], level: int, keyHash: Hash, key: 
         incl(res, newChild, level + parazoaBits, child.keyHash, child.key)
         incl(res, newChild, level + parazoaBits, keyHash, key)
 
-func incl*[T](s: Set[T], keyHash: Hash, key: T): Set[T]  =
+func incl[T](s: Set[T], keyHash: Hash, key: T): Set[T]  =
   var res = s
   res.root = copyRef(s.root)
   incl(res, res.root, 0, keyHash, key)
@@ -424,12 +424,53 @@ func add*[T](v: Vec[T], value: T): Vec[T]  =
   except IndexDefect:
     v
 
+func setLen*[T](v: Vec[T], newLen: int): Vec[T]  =
+  if v.len > newLen:
+    var res = v
+    while true:
+      if res.shift > 0:
+        let minSize = branchWidth ^ res.shift
+        if newLen < minSize:
+          res.root = res.root.nodes[0]
+          res.shift = res.shift - 1
+        else:
+          break
+      else:
+        break
+    res.root = copyRef(res.root)
+    res.size = newLen
+    # nil out the remaining nodes
+    # in case any of them have data from the larger vec
+    let index = (res.size shr (res.shift * parazoaBits)) and mask
+    for i in index ..< res.root.nodes.len:
+      res.root.nodes[i] = nil
+    res
+  elif v.len < newLen:
+    var res = v
+    while true:
+      let maxSize = branchWidth ^ (res.shift + 1)
+      if newLen > maxSize:
+        let oldRoot = res.root
+        res.root = VecNode[T](kind: Branch)
+        res.shift = res.shift + 1
+        let index = ((maxSize-1) shr (res.shift * parazoaBits)) and mask
+        res.root.nodes[index] = oldRoot
+      else:
+        break
+    res.root = copyRef(res.root)
+    res.size = newLen
+    res
+  else:
+    v
+
 func get[T](node: VecNode[T], level: int, key: int): T =
   let
     index = (key shr level) and mask
     child = node.nodes[index]
   if child == nil:
-    raise newException(IndexDefect, "Index is out of bounds")
+    # this can happen if the vec's size was increased via setLen
+    # and the value at this index was never set
+    default(T)
   else:
     case child.kind:
     of Branch:
@@ -438,13 +479,15 @@ func get[T](node: VecNode[T], level: int, key: int): T =
       return child.value
 
 func get*[T](v: Vec[T], key: int): T =
+  if key < 0 or key >= v.len:
+    raise newException(IndexDefect, "Index is out of bounds")
   get(v.root, v.shift * parazoaBits, key)
 
-func getOrDefault*[T](v: Vec[T], key: int, default: T): T  =
+func getOrDefault*[T](v: Vec[T], key: int, defaultValue: T): T  =
   try:
     get(v, key)
   except IndexDefect:
-    default
+    defaultValue
 
 iterator pairs*[T](v: Vec[T]): (int, T) =
   var stack: seq[tuple[parent: VecNode[T], index: int]] = @[(v.root, 0)]
