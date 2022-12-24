@@ -19,8 +19,6 @@ func copyRef[T](node: T): T =
   if node != nil:
     result[] = node[]
 
-## maps
-
 type
   MapNode*[K, V] = ref object
     case kind: NodeKind
@@ -35,9 +33,11 @@ type
     size: Natural
 
 func initMap*[K, V](): Map[K, V]  =
+  ## Returns a new `Map`
   result.root = MapNode[K, V](kind: Branch)
 
 func len*[K, V](m: Map[K, V]): Natural =
+  ## Returns the number of key-value pairs in the `Map`
   m.size
 
 func add[K, V](res: var Map[K, V], node: MapNode[K, V], level: int, keyHash: Hash, key: K, value: V)  =
@@ -73,6 +73,7 @@ func add[K, V](m: Map[K, V], keyHash: Hash, key: K, value: V): Map[K, V]  =
   res
 
 func add*[K, V](m: Map[K, V], key: K, value: V): Map[K, V]  =
+  ## Adds a new key-value pair to the `Map`
   add(m, hash(key), key, value)
 
 func del[K, V](res: var Map[K, V], node: MapNode[K, V], level: int, keyHash: Hash)  =
@@ -92,13 +93,14 @@ func del[K, V](res: var Map[K, V], node: MapNode[K, V], level: int, keyHash: Has
         node.nodes[index] = nil
         res.size -= 1
 
-func del*[K, V](m: Map[K, V], keyHash: Hash): Map[K, V]  =
+func del[K, V](m: Map[K, V], keyHash: Hash): Map[K, V]  =
   var res = m
   res.root = copyRef(m.root)
   del(res, res.root, 0, keyHash)
   res
 
 func del*[K, V](m: Map[K, V], key: K): Map[K, V] =
+  ## Deletes the key-value pair at `key` from the `Map`
   del(m, hash(key))
 
 func get[K, V](node: MapNode[K, V], level: int, keyHash: Hash): V =
@@ -117,19 +119,22 @@ func get[K, V](node: MapNode[K, V], level: int, keyHash: Hash): V =
       else:
         raise newException(KeyError, "Key not found")
 
-func get*[K, V](m: Map[K, V], keyHash: Hash): V =
+func get[K, V](m: Map[K, V], keyHash: Hash): V =
   get(m.root, 0, keyHash)
 
 func get*[K, V](m: Map[K, V], key: K): V =
+  ## Returns the value at `key`, or raises an exception if not found
   get(m, hash(key))
 
 func getOrDefault*[K, V](m: Map[K, V], key: K, defaultValue: V): V  =
+  ## Returns the value at `key`, or `defaultValue` if not found
   try:
     get(m, hash(key))
   except KeyError:
     defaultValue
 
 func contains*[K, V](m: Map[K, V], key: K): bool  =
+  ## Returns whether `key` is inside the `Map`
   try:
     discard get(m, key)
     true
@@ -137,6 +142,7 @@ func contains*[K, V](m: Map[K, V], key: K): bool  =
     false
 
 iterator pairs*[K, V](m: Map[K, V]): (K, V) =
+  ## Iterates over the key-value pairs in the `Map`
   var stack: seq[tuple[parent: MapNode[K, V], index: int]] = @[(m.root, 0)]
   while stack.len > 0:
     let (parent, index) = stack[stack.len-1]
@@ -157,14 +163,17 @@ iterator pairs*[K, V](m: Map[K, V]): (K, V) =
           stack.add((node, 0))
 
 iterator keys*[K, V](m: Map[K, V]): K =
+  ## Iterates over the keys in the `Map`
   for (k, v) in m.pairs:
     yield k
 
 iterator values*[K, V](m: Map[K, V]): V =
+  ## Iterates over the values in the `Map`
   for (k, v) in m.pairs:
     yield v
 
 func `==`*[K, V](m1: Map[K, V], m2: Map[K, V]): bool  =
+  ## Returns whether the `Map`s are equal
   if m1.len != m2.len:
     false
   elif m1.root.unsafeAddr == m2.root.unsafeAddr:
@@ -179,33 +188,37 @@ func `==`*[K, V](m1: Map[K, V], m2: Map[K, V]): bool  =
     true
 
 func toMap*[K, V](arr: openArray[(K, V)]): Map[K, V] =
+  ## Returns a `Map` containing the key-value pairs in `arr`
   var m = initMap[K, V]()
   for (k, v) in arr:
     m = m.add(k, v)
   m
 
 func `$`*[K, V](m: Map[K, V]): string =
+  ## Returns a string representing the `Map`
   var x = newSeq[string]()
   for (k, v) in m.pairs:
     x.add($k & ": " & $v)
   "{" & strutils.join(x, ", ") & "}"
 
 func hash*[K, V](m: Map[K, V]): Hash  =
+  ## Returns a `Hash` of the `Map`
   var h: Hash = 0
   for keyVal in m.pairs:
     h = h !& hash(keyVal)
   !$h
 
 func `&`*[K, V](m1: Map[K, V], m2: Map[K, V]): Map[K, V] =
+  ## Returns a concatenation of the `Map`s
   var res = m1
   for (k, v) in m2.pairs:
     res = res.add(k, v)
   res
 
 func add*[K, V](m1: var Map[K, V], m2: Map[K, V]) =
+  ## Concatenates the second `Map` into the first one
+  ## (This mutates the var with a new `Map` -- the old `Map` is not mutated)
   m1 = m1 & m2
-
-## sets
 
 type
   SetNode*[T] = ref object
@@ -220,9 +233,11 @@ type
     size: Natural
 
 func initSet*[T](): Set[T]  =
+  ## Returns a new `Set`
   result.root = SetNode[T](kind: Branch)
 
 func len*[T](s: Set[T]): Natural =
+  ## Returns the number of values in the `Set`
   s.size
 
 func incl[T](res: var Set[T], node: SetNode[T], level: int, keyHash: Hash, key: T)  =
@@ -255,6 +270,7 @@ func incl[T](s: Set[T], keyHash: Hash, key: T): Set[T]  =
   res
 
 func incl*[T](s: Set[T], key: T): Set[T]  =
+  ## Adds a new value to the `Set`
   incl(s, hash(key), key)
 
 func excl[T](res: var Set[T], node: SetNode[T], level: int, keyHash: Hash)  =
@@ -274,13 +290,14 @@ func excl[T](res: var Set[T], node: SetNode[T], level: int, keyHash: Hash)  =
         node.nodes[index] = nil
         res.size -= 1
 
-func excl*[T](s: Set[T], keyHash: Hash): Set[T]  =
+func excl[T](s: Set[T], keyHash: Hash): Set[T]  =
   var res = s
   res.root = copyRef(s.root)
   excl(res, res.root, 0, keyHash)
   res
 
 func excl*[T](s: Set[T], key: T): Set[T]  =
+  ## Deletes the `key` from the `Set`
   excl(s, hash(key))
 
 func contains[T](node: SetNode[T], level: int, keyHash: Hash): bool  =
@@ -298,13 +315,15 @@ func contains[T](node: SetNode[T], level: int, keyHash: Hash): bool  =
       else:
         false
 
-func contains*[T](s: Set[T], keyHash: Hash): bool  =
+func contains[T](s: Set[T], keyHash: Hash): bool  =
   contains(s.root, 0, keyHash)
 
 func contains*[T](s: Set[T], key: T): bool  =
+  ## Returns whether `key` is inside the `Set`
   contains(s, hash(key))
 
 iterator items*[T](s: Set[T]): T =
+  ## Iterates over the values in the `Set`
   var stack: seq[tuple[parent: SetNode[T], index: int]] = @[(s.root, 0)]
   while stack.len > 0:
     let (parent, index) = stack[stack.len-1]
@@ -325,6 +344,7 @@ iterator items*[T](s: Set[T]): T =
           stack[stack.len-1].index += 1
 
 func `==`*[T](s1: Set[T], s2: Set[T]): bool  =
+  ## Returns whether the `Set`s are equal
   if s1.len != s2.len:
     false
   elif s1.root.unsafeAddr == s2.root.unsafeAddr:
@@ -336,33 +356,37 @@ func `==`*[T](s1: Set[T], s2: Set[T]): bool  =
     true
 
 func toSet*[T](arr: openArray[T]): Set[T] =
+  ## Returns a `Set` containing the values in `arr`
   var s = initSet[T]()
   for k in arr:
     s = s.incl(k)
   s
 
 func `$`*[T](s: Set[T]): string =
+  ## Returns a string representing the `Set`
   var x = newSeq[string]()
   for k in s.items:
     x.add($k)
   "#{" & strutils.join(x, ", ") & "}"
 
 func hash*[T](s: Set[T]): Hash  =
+  ## Returns a `Hash` of the `Set`
   var h: Hash = 0
   for k in s.items:
     h = h !& hash(k)
   !$h
 
 func `&`*[T](s1: Set[T], s2: Set[T]): Set[T] =
+  ## Returns a union of the `Set`s
   var res = s1
   for k in s2.items:
     res = res.add(k)
   res
 
 func add*[T](s1: var Set[T], s2: Set[T]) =
+  ## Unites the second `Set` into the first one
+  ## (This mutates the var with a new `Set` -- the old `Set` is not mutated)
   s1 = s1 & s2
-
-## vecs
 
 type
   VecNode*[T] = ref object
@@ -377,9 +401,11 @@ type
     size: Natural
 
 func initVec*[T](): Vec[T]  =
+  ## Returns a new `Vec`
   result.root = VecNode[T](kind: Branch)
 
 func len*[T](v: Vec[T]): Natural =
+  ## Returns the number of values in the `Vec`
   v.size
 
 func add[T](res: var Vec[T], node: VecNode[T], level: int, key: Natural, value: T)  =
@@ -405,6 +431,7 @@ func add[T](res: var Vec[T], node: VecNode[T], level: int, key: Natural, value: 
       node.nodes[index] = newChild
 
 func add*[T](v: Vec[T], key: Natural, value: T): Vec[T] =
+  ## Updates the existing value at `key`
   if key < 0 or key > v.len:
     raise newException(IndexError, "Index is out of bounds")
   var res = v
@@ -420,9 +447,11 @@ func add*[T](v: Vec[T], key: Natural, value: T): Vec[T] =
   res
 
 func add*[T](v: Vec[T], value: T): Vec[T]  =
+  ## Adds a new value to the `Vec`
   add(v, v.len, value)
 
 func setLen*[T](v: Vec[T], newLen: Natural): Vec[T]  =
+  ## Updates the length of `Vec`
   if v.len > newLen:
     var res = v
     while true:
@@ -477,17 +506,20 @@ func get[T](node: VecNode[T], level: int, key: Natural): T =
       return child.value
 
 func get*[T](v: Vec[T], key: Natural): T =
+  ## Returns the value at `key`, or raises an exception if out of bounds
   if key < 0 or key >= v.len:
     raise newException(IndexError, "Index is out of bounds")
   get(v.root, v.shift * parazoaBits, key)
 
 func getOrDefault*[T](v: Vec[T], key: Natural, defaultValue: T): T  =
+  ## Returns the value at `key`, or `defaultValue` if not found
   try:
     get(v, key)
   except IndexError:
     defaultValue
 
 iterator pairs*[T](v: Vec[T]): (Natural, T) =
+  ## Iterates over the indexes and values in the `Vec`
   var stack: seq[tuple[parent: VecNode[T], index: int]] = @[(v.root, 0)]
   var key: Natural = 0
   while stack.len > 0:
@@ -510,10 +542,12 @@ iterator pairs*[T](v: Vec[T]): (Natural, T) =
           key += 1
 
 iterator items*[T](v: Vec[T]): T =
+  ## Iterates over the values in the `Vec`
   for (i, v) in v.pairs:
     yield v
 
 func `==`*[T](v1: Vec[T], v2: Vec[T]): bool  =
+  ## Returns whether the `Vec`s are equal
   if v1.len != v2.len:
     false
   elif v1.root.unsafeAddr == v2.root.unsafeAddr:
@@ -525,28 +559,34 @@ func `==`*[T](v1: Vec[T], v2: Vec[T]): bool  =
     true
 
 func toVec*[T](arr: openArray[T]): Vec[T] =
+  ## Returns a `Vec` containing the values in `arr`
   var v = initVec[T]()
   for k in arr:
     v = v.add(k)
   v
 
 func `$`*[T](v: Vec[T]): string =
+  ## Returns a string representing the `Vec`
   var x = newSeq[string]()
   for k in v.items:
     x.add($k)
   "[" & strutils.join(x, ", ") & "]"
 
 func hash*[T](v: Vec[T]): Hash  =
+  ## Returns a `Hash` of the `Vec`
   var h: Hash = 0
   for k in v.items:
     h = h !& hash(k)
   !$h
 
 func `&`*[T](v1: Vec[T], v2: Vec[T]): Vec[T] =
+  ## Returns a concatenation of the `Vec`s
   var res = v1
   for k in v2.items:
     res = res.add(k)
   res
 
 func add*[T](v1: var Vec[T], v2: Vec[T]) =
+  ## Concatenates the second `Vec` into the first one
+  ## (This mutates the var with a new `Vec` -- the old `Vec` is not mutated)
   v1 = v1 & v2
