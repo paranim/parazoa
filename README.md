@@ -1,1 +1,0 @@
-WIP immutable, persistent `Map`, `Set`, and `Vec` for Nim, based on and inspired by the ones in Clojure. See [the tests](https://github.com/paranim/parazoa/blob/master/tests/test1.nim) to learn how to use them.
