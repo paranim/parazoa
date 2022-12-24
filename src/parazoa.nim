@@ -14,10 +14,8 @@ type
     Leaf,
 
 func copyRef[T](node: T): T =
-  if node == nil:
-    result = new T
-  else:
-    new result
+  new result
+  if node != nil:
     result[] = node[]
 
 ## maps
