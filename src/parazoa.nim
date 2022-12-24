@@ -457,7 +457,7 @@ func setLen*[T](v: Vec[T], newLen: Natural): Vec[T]  =
     while true:
       if res.shift > 0:
         let minSize = branchWidth ^ res.shift
-        if newLen < minSize:
+        if newLen <= minSize:
           res.root = res.root.nodes[0]
           res.shift = res.shift - 1
         else:

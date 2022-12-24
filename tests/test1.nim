@@ -127,6 +127,9 @@ test "vecs":
   let v8 = v2.setLen(1025).add(1024, "foo").setLen(1024).setLen(1025)
   check v8.get(1024) == ""
   check v8.shift == 2
+  check v2.setLen(32).shift == 0
+  check v2.setLen(33).setLen(32).shift == 0
+  check v2.setLen(33).setLen(32).setLen(33).shift == 1
   let v9 = v8.setLen(50).add(49, "foo").setLen(49).setLen(50)
   check v9.get(49) == ""
   check v9.shift == 1
