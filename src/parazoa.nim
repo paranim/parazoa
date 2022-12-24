@@ -451,8 +451,8 @@ func add*[T](v: Vec[T], value: T): Vec[T]  =
   add(v, v.len, value)
 
 func setLen*[T](v: Vec[T], newLen: Natural): Vec[T]  =
-  var res = v
   ## Updates the length of `Vec`
+  var res = v
   if v.len > newLen:
     while true:
       if res.shift > 0:
