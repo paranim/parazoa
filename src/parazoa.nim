@@ -54,7 +54,9 @@ func add[K, V](res: var Map[K, V], node: MapNode[K, V], level: int, keyHash: Has
       add(res, newChild, level + parazoaBits, keyHash, key, value)
     of Leaf:
       if child.keyHash == keyHash:
-        node.nodes[index].value = value
+        let newChild = copyRef(child)
+        newChild.value = value
+        node.nodes[index] = newChild
       else:
         res.size -= 1
         let newChild = MapNode[K, V](kind: Branch)
@@ -392,13 +394,14 @@ func add[T](res: var Vec[T], node: VecNode[T], level: int, key: int, value: T)  
       node.nodes[index] = newChild
       add(res, newChild, level - parazoaBits, key, value)
   else:
+    let newChild = copyRef(child)
     case child.kind:
     of Branch:
-      let newChild = copyRef(child)
       node.nodes[index] = newChild
       add(res, newChild, level - parazoaBits, key, value)
     of Leaf:
-      node.nodes[index].value = value
+      newChild.value = value
+      node.nodes[index] = newChild
 
 func add*[T](v: Vec[T], key: int, value: T): Vec[T] =
   if key < 0 or key > v.len:

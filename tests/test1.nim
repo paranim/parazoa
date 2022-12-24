@@ -10,7 +10,7 @@ test "maps":
   expect(KeyError):
     discard m1.get("hello")
   check m2.get("hello") == "world"
-  let m3 = m1.add("hello", "goodbye")
+  let m3 = m2.add("hello", "goodbye")
   expect(KeyError):
     discard m1.get("hello")
   check m2.get("hello") == "world"
@@ -49,6 +49,7 @@ test "maps":
   # equality
   check m1 == m1
   check m1 != m2
+  check m2 != m3
   check m8 == m9
 
 test "sets":
@@ -118,6 +119,7 @@ test "vecs":
   # equality
   check v1 == v1
   check v1 != v2
+  check v4 != v5
   check v6 == v7
 
 import hashes
