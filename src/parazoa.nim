@@ -451,9 +451,9 @@ func add*[T](v: Vec[T], value: T): Vec[T]  =
   add(v, v.len, value)
 
 func setLen*[T](v: Vec[T], newLen: Natural): Vec[T]  =
+  var res = v
   ## Updates the length of `Vec`
   if v.len > newLen:
-    var res = v
     while true:
       if res.shift > 0:
         let minSize = branchWidth ^ res.shift
@@ -471,9 +471,7 @@ func setLen*[T](v: Vec[T], newLen: Natural): Vec[T]  =
     let index = (res.size shr (res.shift * parazoaBits)) and mask
     for i in index ..< res.root.nodes.len:
       res.root.nodes[i] = nil
-    res
   elif v.len < newLen:
-    var res = v
     while true:
       let maxSize = branchWidth ^ (res.shift + 1)
       if newLen > maxSize:
@@ -486,9 +484,7 @@ func setLen*[T](v: Vec[T], newLen: Natural): Vec[T]  =
         break
     res.root = copyRef(res.root)
     res.size = newLen
-    res
-  else:
-    v
+  res
 
 func get[T](node: VecNode[T], level: int, key: Natural): T =
   let
