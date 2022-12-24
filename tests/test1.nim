@@ -90,11 +90,11 @@ test "vecs":
   let v2 = v1.add("hello")
   check v1.getOrDefault(0, "") == ""
   check v2.getOrDefault(0, "") == "hello"
-  expect(IndexDefect):
+  expect(IndexError):
     discard v1.get(0)
   check v2.get(0) == "hello"
   let v3 = v1.add("goodbye")
-  expect(IndexDefect):
+  expect(IndexError):
     discard v1.get(0)
   check v2.get(0) == "hello"
   check v3.get(0) == "goodbye"
