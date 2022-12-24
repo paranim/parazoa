@@ -6,7 +6,6 @@ const
   parazoaBits* {.intdefine.} = 5
   branchWidth = 1 shl parazoaBits
   mask = branchWidth - 1
-  hashSize = sizeof(Hash) * 8
 
 type
   NodeKind = enum
