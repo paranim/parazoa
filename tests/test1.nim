@@ -11,6 +11,7 @@ test "maps":
   expect(KeyError):
     discard m1.get("hello")
   check m2.get("hello") == "world"
+  check m2["hello"] == "world"
   let m3 = m2.add("hello", "goodbye")
   expect(KeyError):
     discard m1.get("hello")
@@ -133,6 +134,27 @@ test "vecs":
   let v9 = v8.setLen(50).add(49, "foo").setLen(49).setLen(50)
   check v9.get(49) == ""
   check v9.shift == 1
+
+test "vecs slice":
+  var v1 = initVec[string]()
+  v1 = v1.add("one")
+  v1 = v1.add("two")
+  v1 = v1.add("three")
+  v1 = v1.add("four")
+  check v1.len() == 4
+
+  let s1 = v1[1..2]
+  check s1.len() == 2
+  check s1[0] == "two"
+  check s1[1] == "three"
+  check s1.toSeq == @["two", "three"]
+
+  let s2 = v1[1..1]
+  echo "S2: ", s2
+  check s2.len() == 1
+  check s2[0] == "two"
+  check s2.toSeq == @["two"]
+
 
 import hashes
 
