@@ -212,15 +212,15 @@ func hash*[K, V](m: Map[K, V]): Hash  =
   !$h
 
 func `&`*[K, V](m1: Map[K, V], m2: Map[K, V]): Map[K, V] =
-  ## Returns a concatenation of the `Map`s
+  ## Returns a merge of the `Map`s
   var res = m1
   for (k, v) in m2.pairs:
     res = res.add(k, v)
   res
 
 func add*[K, V](m1: var Map[K, V], m2: Map[K, V]) =
-  ## Concatenates the second `Map` into the first one
-  ## (This mutates the var with a new `Map` -- the old `Map` is not mutated)
+  ## Merges the second `Map` into the first one
+  ## (This sets the var to a new `Map` -- the old `Map` is not mutated)
   m1 = m1 & m2
 
 type
@@ -391,7 +391,7 @@ func `&`*[T](s1: Set[T], s2: Set[T]): Set[T] =
 
 func add*[T](s1: var Set[T], s2: Set[T]) =
   ## Unites the second `Set` into the first one
-  ## (This mutates the var with a new `Set` -- the old `Set` is not mutated)
+  ## (This sets the var to a new `Set` -- the old `Set` is not mutated)
   s1 = s1 & s2
 
 type
@@ -594,5 +594,5 @@ func `&`*[T](v1: Vec[T], v2: Vec[T]): Vec[T] =
 
 func add*[T](v1: var Vec[T], v2: Vec[T]) =
   ## Concatenates the second `Vec` into the first one
-  ## (This mutates the var with a new `Vec` -- the old `Vec` is not mutated)
+  ## (This sets the var to a new `Vec` -- the old `Vec` is not mutated)
   v1 = v1 & v2
