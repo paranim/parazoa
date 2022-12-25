@@ -68,6 +68,7 @@ test "sets":
   check not s1.contains("hello")
   check s2.contains("hello")
   check s3.contains("goodbye")
+  check "goodbye" in s3
   let s4 = s3.incl("what's")
   let s5 = s3.excl("what's").excl("asdf")
   check s1.len == 0
