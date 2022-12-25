@@ -68,8 +68,7 @@ func add[K, V](res: var Map[K, V], node: MapNode[K, V], level: int, keyHash: Has
 func add[K, V](m: Map[K, V], keyHash: Hash, key: K, value: V): Map[K, V]  =
   var res = m
   res.root = copyRef(m.root)
-  var node = res.root
-  add(res, node, 0, keyHash, key, value)
+  add(res, res.root, 0, keyHash, key, value)
   res
 
 func add*[K, V](m: Map[K, V], key: K, value: V): Map[K, V]  =
