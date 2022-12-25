@@ -164,8 +164,12 @@ test "vecs del":
   check v1.len() == 4
 
   let v2 = v1.del(2)
-  check v1.toSeq == @["one", "two", "three", "four"]
   check v2.toSeq == @["one", "two", "four"]
+
+  let v3 = v2.del(0)
+  check v3.toSeq == @["two", "four"]
+
+  check v1.toSeq == @["one", "two", "three", "four"]
 
 test "vecs slice":
   var v1 = initVec[string]()
@@ -181,16 +185,19 @@ test "vecs slice":
   check s1[1] == "three"
   check s1.toSeq == @["two", "three"]
 
-  echo "\nNEW SLICE"
   let s2 = v1[1..1]
   check s2.len() == 1
   check s2[0] == "two"
   check s2.toSeq == @["two"]
 
   let v2 = s1.add("five")
-  echo "s1: ", s1
-  echo "v2: ", v2
+  check v2.toSeq == @["two", "three", "five"]
 
+  let v3 = v2.add("six")
+  check v3.toSeq == @["two", "three", "five", "six"]
+
+  check v2.toSeq == @["two", "three", "five"]
+  check s1.toSeq == @["two", "three"]
 
 import hashes
 

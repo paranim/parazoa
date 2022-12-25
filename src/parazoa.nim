@@ -442,6 +442,7 @@ func del*[T](m: Vec[T], key: Natural): Vec[T] =
   result = m
   result.root = copyRef(m.root)
   del(result, result.root, 0, key)
+
 func add[T](res: var Vec[T], node: VecNode[T], level: int, key: Natural, value: T)  =
   let
     index = (key shr level) and mask
@@ -463,13 +464,15 @@ func add[T](res: var Vec[T], node: VecNode[T], level: int, key: Natural, value: 
     of Leaf:
       newChild.value = value
       node.nodes[index] = newChild
+      res.size.inc()
 
 func add*[T](v: Vec[T], key: Natural, value: T): Vec[T] =
   ## Updates the existing value at `key`
   if key < 0 or key > v.len:
     raise newException(IndexError, "Index is out of bounds")
+  let key = key + v.start
   var res = v
-  if key == v.len and key == branchWidth ^ (v.shift + 1):
+  if key == v.len + v.start and key == branchWidth ^ (v.shift + 1):
     res.root = VecNode[T](kind: Branch)
     res.shift = v.shift + 1
     res.size = v.len
@@ -477,6 +480,8 @@ func add*[T](v: Vec[T], key: Natural, value: T): Vec[T] =
     res.root.nodes[index] = v.root
   else:
     res.root = copyRef(v.root)
+    for i in 0 ..< res.start:
+      res.root.nodes[i] = nil
   add(res, res.root, res.shift * parazoaBits, key, value)
   res
 
