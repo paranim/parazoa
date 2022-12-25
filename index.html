@@ -17,7 +17,7 @@
 <link href='https://fonts.googleapis.com/css?family=Source+Code+Pro:400,500,600' rel='stylesheet' type='text/css'/>
 
 <!-- CSS -->
-<title>parazoa</title>
+<title>src/parazoa</title>
 <link rel="stylesheet" type="text/css" href="nimdoc.out.css">
 
 <script type="text/javascript" src="dochack.js"></script>
@@ -69,7 +69,7 @@ window.addEventListener('DOMContentLoaded', main);
 <body>
 <div class="document" id="documentId">
   <div class="container">
-    <h1 class="title">parazoa</h1>
+    <h1 class="title">src/parazoa</h1>
     <div class="row">
   <div class="three columns">
   <div class="theme-switch-wrapper">
@@ -482,7 +482,7 @@ Returns a string representing the <tt class="docutils literal"><span class="pre"
 <dt><pre><span class="Keyword">func</span> <a href="#%26%2CMap%5BK%2CV%5D%2CMap%5BK%2CV%5D"><span class="Identifier">`&amp;`</span></a><span class="Other">[</span><span class="Identifier">K</span><span class="Other">,</span> <span class="Identifier">V</span><span class="Other">]</span><span class="Other">(</span><span class="Identifier">m1</span><span class="Other">:</span> <a href="parazoa.html#Map"><span class="Identifier">Map</span></a><span class="Other">[</span><span class="Identifier">K</span><span class="Other">,</span> <span class="Identifier">V</span><span class="Other">]</span><span class="Other">;</span> <span class="Identifier">m2</span><span class="Other">:</span> <a href="parazoa.html#Map"><span class="Identifier">Map</span></a><span class="Other">[</span><span class="Identifier">K</span><span class="Other">,</span> <span class="Identifier">V</span><span class="Other">]</span><span class="Other">)</span><span class="Other">:</span> <a href="parazoa.html#Map"><span class="Identifier">Map</span></a><span class="Other">[</span><span class="Identifier">K</span><span class="Other">,</span> <span class="Identifier">V</span><span class="Other">]</span></pre></dt>
 <dd>
 
-Returns a concatenation of the <tt class="docutils literal"><span class="pre"><span class="Identifier">Map</span></span></tt>s
+Returns a merge of the <tt class="docutils literal"><span class="pre"><span class="Identifier">Map</span></span></tt>s
 
 </dd>
 </div>
@@ -530,7 +530,7 @@ Returns whether the <tt class="docutils literal"><span class="pre"><span class="
 <dt><pre><span class="Keyword">func</span> <a href="#add%2CMap%5BK%2CV%5D%2CMap%5BK%2CV%5D"><span class="Identifier">add</span></a><span class="Other">[</span><span class="Identifier">K</span><span class="Other">,</span> <span class="Identifier">V</span><span class="Other">]</span><span class="Other">(</span><span class="Identifier">m1</span><span class="Other">:</span> <span class="Keyword">var</span> <a href="parazoa.html#Map"><span class="Identifier">Map</span></a><span class="Other">[</span><span class="Identifier">K</span><span class="Other">,</span> <span class="Identifier">V</span><span class="Other">]</span><span class="Other">;</span> <span class="Identifier">m2</span><span class="Other">:</span> <a href="parazoa.html#Map"><span class="Identifier">Map</span></a><span class="Other">[</span><span class="Identifier">K</span><span class="Other">,</span> <span class="Identifier">V</span><span class="Other">]</span><span class="Other">)</span></pre></dt>
 <dd>
 
-Concatenates the second <tt class="docutils literal"><span class="pre"><span class="Identifier">Map</span></span></tt> into the first one (This mutates the var with a new <tt class="docutils literal"><span class="pre"><span class="Identifier">Map</span></span></tt> -- the old <tt class="docutils literal"><span class="pre"><span class="Identifier">Map</span></span></tt> is not mutated)
+Merges the second <tt class="docutils literal"><span class="pre"><span class="Identifier">Map</span></span></tt> into the first one (This sets the var to a new <tt class="docutils literal"><span class="pre"><span class="Identifier">Map</span></span></tt> -- the old <tt class="docutils literal"><span class="pre"><span class="Identifier">Map</span></span></tt> is not mutated)
 
 </dd>
 </div>
@@ -546,7 +546,7 @@ Adds a new key-value pair to the <tt class="docutils literal"><span class="pre">
 <dt><pre><span class="Keyword">func</span> <a href="#add%2CSet%5BT%5D%2CSet%5BT%5D"><span class="Identifier">add</span></a><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">(</span><span class="Identifier">s1</span><span class="Other">:</span> <span class="Keyword">var</span> <a href="parazoa.html#Set"><span class="Identifier">Set</span></a><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">;</span> <span class="Identifier">s2</span><span class="Other">:</span> <a href="parazoa.html#Set"><span class="Identifier">Set</span></a><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">)</span></pre></dt>
 <dd>
 
-Unites the second <tt class="docutils literal"><span class="pre"><span class="Identifier">Set</span></span></tt> into the first one (This mutates the var with a new <tt class="docutils literal"><span class="pre"><span class="Identifier">Set</span></span></tt> -- the old <tt class="docutils literal"><span class="pre"><span class="Identifier">Set</span></span></tt> is not mutated)
+Unites the second <tt class="docutils literal"><span class="pre"><span class="Identifier">Set</span></span></tt> into the first one (This sets the var to a new <tt class="docutils literal"><span class="pre"><span class="Identifier">Set</span></span></tt> -- the old <tt class="docutils literal"><span class="pre"><span class="Identifier">Set</span></span></tt> is not mutated)
 
 </dd>
 </div>
@@ -554,7 +554,7 @@ Unites the second <tt class="docutils literal"><span class="pre"><span class="Id
 <dt><pre><span class="Keyword">func</span> <a href="#add%2CVec%5BT%5D%2CVec%5BT%5D"><span class="Identifier">add</span></a><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">(</span><span class="Identifier">v1</span><span class="Other">:</span> <span class="Keyword">var</span> <a href="parazoa.html#Vec"><span class="Identifier">Vec</span></a><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">;</span> <span class="Identifier">v2</span><span class="Other">:</span> <a href="parazoa.html#Vec"><span class="Identifier">Vec</span></a><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">)</span></pre></dt>
 <dd>
 
-Concatenates the second <tt class="docutils literal"><span class="pre"><span class="Identifier">Vec</span></span></tt> into the first one (This mutates the var with a new <tt class="docutils literal"><span class="pre"><span class="Identifier">Vec</span></span></tt> -- the old <tt class="docutils literal"><span class="pre"><span class="Identifier">Vec</span></span></tt> is not mutated)
+Concatenates the second <tt class="docutils literal"><span class="pre"><span class="Identifier">Vec</span></span></tt> into the first one (This sets the var to a new <tt class="docutils literal"><span class="pre"><span class="Identifier">Vec</span></span></tt> -- the old <tt class="docutils literal"><span class="pre"><span class="Identifier">Vec</span></span></tt> is not mutated)
 
 </dd>
 </div>
@@ -813,7 +813,7 @@ Iterates over the values in the <tt class="docutils literal"><span class="pre"><
       <div class="twelve-columns footer">
         <span class="nim-sprite"></span>
         <br/>
-        <small style="color: var(--hint);">Made with Nim. Generated: 2022-12-24 21:58:40 UTC</small>
+        <small style="color: var(--hint);">Made with Nim. Generated: 2022-12-25 02:55:51 UTC</small>
       </div>
     </div>
   </div>
