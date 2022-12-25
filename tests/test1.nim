@@ -8,6 +8,7 @@ test "maps":
   expect(KeyError):
     discard m1.get("hello")
   check m2.get("hello") == "world"
+  check m2["hello"] == "world"
   check m1.getOrDefault("hello", "") == ""
   check m2.getOrDefault("hello", "") == "world"
   check m2.contains("hello")
@@ -68,6 +69,7 @@ test "sets":
   check not s1.contains("hello")
   check s2.contains("hello")
   check s3.contains("goodbye")
+  check "goodbye" in s3
   let s4 = s3.incl("what's")
   let s5 = s3.excl("what's").excl("asdf")
   check s1.len == 0
@@ -152,6 +154,50 @@ test "vecs":
   check v10.getOrDefault(0, "") == ""
   check v10.add("hello").get(0) == "hello"
   check v10 == v1
+
+test "vecs del":
+  var v1 = initVec[string]()
+  v1 = v1.add("one")
+  v1 = v1.add("two")
+  v1 = v1.add("three")
+  v1 = v1.add("four")
+  check v1.len() == 4
+
+  let v2 = v1.del(2)
+  check v2.toSeq == @["one", "two", "four"]
+
+  let v3 = v2.del(0)
+  check v3.toSeq == @["two", "four"]
+
+  check v1.toSeq == @["one", "two", "three", "four"]
+
+test "vecs slice":
+  var v1 = initVec[string]()
+  v1 = v1.add("one")
+  v1 = v1.add("two")
+  v1 = v1.add("three")
+  v1 = v1.add("four")
+  check v1.len() == 4
+
+  let s1 = v1[1..2]
+  check s1.len() == 2
+  check s1[0] == "two"
+  check s1[1] == "three"
+  check s1.toSeq == @["two", "three"]
+
+  let s2 = v1[1..1]
+  check s2.len() == 1
+  check s2[0] == "two"
+  check s2.toSeq == @["two"]
+
+  let v2 = s1.add("five")
+  check v2.toSeq == @["two", "three", "five"]
+
+  let v3 = v2.add("six")
+  check v3.toSeq == @["two", "three", "five", "six"]
+
+  check v2.toSeq == @["two", "three", "five"]
+  check s1.toSeq == @["two", "three"]
 
 import hashes
 

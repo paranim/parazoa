@@ -197,6 +197,10 @@ func toMap*[K, V](arr: openArray[(K, V)]): Map[K, V] =
     m = m.add(k, v)
   m
 
+proc `[]`[K, V](m: Map[K, V]; key: K): V =
+  ## get key
+  m.get(key)
+
 func `$`*[K, V](m: Map[K, V]): string =
   ## Returns a string representing the `Map`
   var x = newSeq[string]()
@@ -404,7 +408,8 @@ type
       value: T
   Vec*[T] = object
     root: VecNode[T]
-    shift: int
+    shift: int16
+    start: int16
     size: Natural
 
 func initVec*[T](): Vec[T]  =
@@ -415,6 +420,29 @@ func len*[T](v: Vec[T]): Natural =
   ## Returns the number of values in the `Vec`
   v.size
 
+func del[T](res: var Vec[T], node: VecNode[T], level: int, key: Natural)  =
+  let
+    index = (key shr level) and mask
+    child = node.nodes[index]
+  if child == nil:
+    discard
+  else:
+    case child.kind:
+    of Branch:
+      let newChild = copyRef(child)
+      node.nodes[index] = newChild
+      del(res, newChild, level + parazoaBits, key)
+    of Leaf:
+      node.nodes[index ..< ^2] = node.nodes[index+1 ..< ^1]
+      node.nodes[^1] = nil
+      res.size -= 1
+
+func del*[T](m: Vec[T], key: Natural): Vec[T] =
+  ## delete node at index
+  result = m
+  result.root = copyRef(m.root)
+  del(result, result.root, 0, key)
+
 func add[T](res: var Vec[T], node: VecNode[T], level: int, key: Natural, value: T)  =
   let
     index = (key shr level) and mask
@@ -422,7 +450,7 @@ func add[T](res: var Vec[T], node: VecNode[T], level: int, key: Natural, value: 
   if child == nil:
     if level == 0:
       node.nodes[index] = VecNode[T](kind: Leaf, value: value)
-      res.size += 1
+      res.size.inc()
     else:
       let newChild = VecNode[T](kind: Branch)
       node.nodes[index] = newChild
@@ -436,13 +464,15 @@ func add[T](res: var Vec[T], node: VecNode[T], level: int, key: Natural, value: 
     of Leaf:
       newChild.value = value
       node.nodes[index] = newChild
+      res.size.inc()
 
 func add*[T](v: Vec[T], key: Natural, value: T): Vec[T] =
   ## Updates the existing value at `key`
   if key < 0 or key > v.len:
     raise newException(IndexError, "Index is out of bounds")
+  let key = key + v.start
   var res = v
-  if key == v.len and key == branchWidth ^ (v.shift + 1):
+  if key == v.len + v.start and key == branchWidth ^ (v.shift + 1):
     res.root = VecNode[T](kind: Branch)
     res.shift = v.shift + 1
     res.size = v.len
@@ -450,12 +480,15 @@ func add*[T](v: Vec[T], key: Natural, value: T): Vec[T] =
     res.root.nodes[index] = v.root
   else:
     res.root = copyRef(v.root)
+    for i in 0 ..< res.start:
+      res.root.nodes[i] = nil
   add(res, res.root, res.shift * parazoaBits, key, value)
   res
 
 func add*[T](v: Vec[T], value: T): Vec[T]  =
   ## Adds a new value to the `Vec`
   add(v, v.len, value)
+
 
 func setLen*[T](v: Vec[T], newLen: Natural): Vec[T]  =
   ## Updates the length of `Vec`
@@ -516,7 +549,7 @@ func get*[T](v: Vec[T], key: Natural): T =
   ## Returns the value at `key`, or raises an exception if out of bounds
   if key < 0 or key >= v.len:
     raise newException(IndexError, "Index is out of bounds")
-  get(v.root, v.shift * parazoaBits, key)
+  get(v.root, v.shift * parazoaBits, key + v.start)
 
 func getOrDefault*[T](v: Vec[T], key: Natural, defaultValue: T): T  =
   ## Returns the value at `key`, or `defaultValue` if not found
@@ -528,7 +561,7 @@ func getOrDefault*[T](v: Vec[T], key: Natural, defaultValue: T): T  =
 iterator pairs*[T](v: Vec[T]): (Natural, T) =
   ## Iterates over the indexes and values in the `Vec`
   if v.root != nil:
-    var stack: seq[tuple[parent: VecNode[T], index: int]] = @[(v.root, 0)]
+    var stack: seq[tuple[parent: VecNode[T], index: int]] = @[(v.root, v.start.int)]
     var key: Natural = 0
     while stack.len > 0:
       let (parent, index) = stack[stack.len-1]
@@ -545,6 +578,8 @@ iterator pairs*[T](v: Vec[T]): (Natural, T) =
           of Branch:
             stack.add((node, 0))
           of Leaf:
+            if key >= v.size:
+              break
             yield (key, node.value)
             stack[stack.len-1].index += 1
             key += 1
@@ -553,6 +588,18 @@ iterator items*[T](v: Vec[T]): T =
   ## Iterates over the values in the `Vec`
   for (i, v) in v.pairs:
     yield v
+
+proc `[]`[T](v: Vec[T]; key: Natural): T =
+  ## get key
+  v.get(key)
+
+proc `[]`[T; U, V: Ordinal](v: Vec[T]; x: HSlice[U, V]): Vec[T] =
+  ## Returns the value at `key`, or raises an exception if out of bounds
+  if x.a < 0 or x.a > x.b or x.b > v.size:
+    raise newException(IndexError, "Index is out of bounds")
+  result = v
+  result.start = x.a.int16
+  result.size = x.b - x.a + 1
 
 func `==`*[T](v1: Vec[T], v2: Vec[T]): bool  =
   ## Returns whether the `Vec`s are equal
@@ -572,6 +619,12 @@ func toVec*[T](arr: openArray[T]): Vec[T] =
   for k in arr:
     v = v.add(k)
   v
+
+func toSeq*[T](v: Vec[T]): seq[T] =
+  ## Returns a `seq` containing the values in `Vec`
+  result = newSeqOfCap[T](v.len)
+  for k in v:
+    result.add(k)
 
 func `$`*[T](v: Vec[T]): string =
   ## Returns a string representing the `Vec`
