@@ -146,24 +146,25 @@ func contains*[K, V](m: Map[K, V], key: K): bool  =
 
 iterator pairs*[K, V](m: Map[K, V]): (K, V) =
   ## Iterates over the key-value pairs in the `Map`
-  var stack: seq[tuple[parent: MapNode[K, V], index: int]] = @[(m.root, 0)]
-  while stack.len > 0:
-    let (parent, index) = stack[stack.len-1]
-    if index == parent.nodes.len:
-      discard stack.pop()
-      if stack.len > 0:
-        stack[stack.len-1].index += 1
-    else:
-      let node = parent.nodes[index]
-      if node == nil:
-        stack[stack.len-1].index += 1
-      else:
-        case node.kind:
-        of Leaf:
-          yield (node.key, node.value)
+  if m.root != nil:
+    var stack: seq[tuple[parent: MapNode[K, V], index: int]] = @[(m.root, 0)]
+    while stack.len > 0:
+      let (parent, index) = stack[stack.len-1]
+      if index == parent.nodes.len:
+        discard stack.pop()
+        if stack.len > 0:
           stack[stack.len-1].index += 1
-        of Branch:
-          stack.add((node, 0))
+      else:
+        let node = parent.nodes[index]
+        if node == nil:
+          stack[stack.len-1].index += 1
+        else:
+          case node.kind:
+          of Leaf:
+            yield (node.key, node.value)
+            stack[stack.len-1].index += 1
+          of Branch:
+            stack.add((node, 0))
 
 iterator keys*[K, V](m: Map[K, V]): K =
   ## Iterates over the keys in the `Map`
@@ -330,24 +331,25 @@ func contains*[T](s: Set[T], key: T): bool  =
 
 iterator items*[T](s: Set[T]): T =
   ## Iterates over the values in the `Set`
-  var stack: seq[tuple[parent: SetNode[T], index: int]] = @[(s.root, 0)]
-  while stack.len > 0:
-    let (parent, index) = stack[stack.len-1]
-    if index == parent.nodes.len:
-      discard stack.pop()
-      if stack.len > 0:
-        stack[stack.len-1].index += 1
-    else:
-      let node = parent.nodes[index]
-      if node == nil:
-        stack[stack.len-1].index += 1
-      else:
-        case node.kind:
-        of Branch:
-          stack.add((node, 0))
-        of Leaf:
-          yield node.key
+  if s.root != nil:
+    var stack: seq[tuple[parent: SetNode[T], index: int]] = @[(s.root, 0)]
+    while stack.len > 0:
+      let (parent, index) = stack[stack.len-1]
+      if index == parent.nodes.len:
+        discard stack.pop()
+        if stack.len > 0:
           stack[stack.len-1].index += 1
+      else:
+        let node = parent.nodes[index]
+        if node == nil:
+          stack[stack.len-1].index += 1
+        else:
+          case node.kind:
+          of Branch:
+            stack.add((node, 0))
+          of Leaf:
+            yield node.key
+            stack[stack.len-1].index += 1
 
 func `==`*[T](s1: Set[T], s2: Set[T]): bool  =
   ## Returns whether the `Set`s are equal
@@ -526,26 +528,27 @@ func getOrDefault*[T](v: Vec[T], key: Natural, defaultValue: T): T  =
 
 iterator pairs*[T](v: Vec[T]): (Natural, T) =
   ## Iterates over the indexes and values in the `Vec`
-  var stack: seq[tuple[parent: VecNode[T], index: int]] = @[(v.root, 0)]
-  var key: Natural = 0
-  while stack.len > 0:
-    let (parent, index) = stack[stack.len-1]
-    if index == parent.nodes.len:
-      discard stack.pop()
-      if stack.len > 0:
-        stack[stack.len-1].index += 1
-    else:
-      let node = parent.nodes[index]
-      if node == nil:
-        break
-      else:
-        case node.kind:
-        of Branch:
-          stack.add((node, 0))
-        of Leaf:
-          yield (key, node.value)
+  if v.root != nil:
+    var stack: seq[tuple[parent: VecNode[T], index: int]] = @[(v.root, 0)]
+    var key: Natural = 0
+    while stack.len > 0:
+      let (parent, index) = stack[stack.len-1]
+      if index == parent.nodes.len:
+        discard stack.pop()
+        if stack.len > 0:
           stack[stack.len-1].index += 1
-          key += 1
+      else:
+        let node = parent.nodes[index]
+        if node == nil:
+          break
+        else:
+          case node.kind:
+          of Branch:
+            stack.add((node, 0))
+          of Leaf:
+            yield (key, node.value)
+            stack[stack.len-1].index += 1
+            key += 1
 
 iterator items*[T](v: Vec[T]): T =
   ## Iterates over the values in the `Vec`

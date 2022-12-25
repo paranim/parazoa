@@ -56,6 +56,7 @@ test "maps":
   var m10: Map[string, string]
   check m10.getOrDefault("hello", "") == ""
   check m10.add("hello", "world").get("hello") == "world"
+  check m10 == m1
 
 test "sets":
   let s1 = initSet[string]()
@@ -92,6 +93,7 @@ test "sets":
   var s8: Set[string]
   check not s8.contains("hello")
   check s8.incl("hello").contains("hello")
+  check s8 == s1
 
 test "vecs":
   let v1 = initVec[string]()
@@ -143,8 +145,10 @@ test "vecs":
   check v9.shift == 1
   # non-initialized vecs work (but not recommended)
   var v10: Vec[string]
+  check v10.setLen(10).len == 10
   check v10.getOrDefault(0, "") == ""
   check v10.add("hello").get(0) == "hello"
+  check v10 == v1
 
 import hashes
 
