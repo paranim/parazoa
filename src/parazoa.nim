@@ -462,6 +462,29 @@ func add*[T](v: Vec[T], value: T): Vec[T]  =
   ## Adds a new value to the `Vec`
   add(v, v.len, value)
 
+func del[T](res: var Vec[T], node: VecNode[T], level: int, key: Natural)  =
+  let
+    index = (key shr level) and mask
+    child = node.nodes[index]
+  if child == nil:
+    discard
+  else:
+    case child.kind:
+    of Branch:
+      let newChild = copyRef(child)
+      node.nodes[index] = newChild
+      del(res, newChild, level + parazoaBits, key)
+    of Leaf:
+      node.nodes[index ..< ^2] = node.nodes[index+1 ..< ^1]
+      node.nodes[^1] = nil
+      res.size -= 1
+
+func del*[T](m: Vec[T], key: Natural): Vec[T] =
+  ## delete node at index
+  result = m
+  result.root = copyRef(m.root)
+  del(result, result.root, 0, key)
+
 func setLen*[T](v: Vec[T], newLen: Natural): Vec[T]  =
   ## Updates the length of `Vec`
   var res = v

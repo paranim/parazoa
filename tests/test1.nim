@@ -155,6 +155,18 @@ test "vecs":
   check v10.add("hello").get(0) == "hello"
   check v10 == v1
 
+test "vecs del":
+  var v1 = initVec[string]()
+  v1 = v1.add("one")
+  v1 = v1.add("two")
+  v1 = v1.add("three")
+  v1 = v1.add("four")
+  check v1.len() == 4
+
+  let v2 = v1.del(2)
+  check v1.toSeq == @["one", "two", "three", "four"]
+  check v2.toSeq == @["one", "two", "four"]
+
 test "vecs slice":
   var v1 = initVec[string]()
   v1 = v1.add("one")
@@ -169,10 +181,15 @@ test "vecs slice":
   check s1[1] == "three"
   check s1.toSeq == @["two", "three"]
 
+  echo "\nNEW SLICE"
   let s2 = v1[1..1]
   check s2.len() == 1
   check s2[0] == "two"
   check s2.toSeq == @["two"]
+
+  let v2 = s1.add("five")
+  echo "s1: ", s1
+  echo "v2: ", v2
 
 
 import hashes
