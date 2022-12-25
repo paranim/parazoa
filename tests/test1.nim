@@ -52,6 +52,10 @@ test "maps":
   check m1 != m2
   check m2 != m3
   check m8 == m9
+  # non-initialized maps work (but not recommended)
+  var m10: Map[string, string]
+  check m10.getOrDefault("hello", "") == ""
+  check m10.add("hello", "world").get("hello") == "world"
 
 test "sets":
   let s1 = initSet[string]()
@@ -84,6 +88,10 @@ test "sets":
   check s1 == s1
   check s1 != s2
   check s6 == s7
+  # non-initialized sets work (but not recommended)
+  var s8: Set[string]
+  check not s8.contains("hello")
+  check s8.incl("hello").contains("hello")
 
 test "vecs":
   let v1 = initVec[string]()
@@ -133,6 +141,10 @@ test "vecs":
   let v9 = v8.setLen(50).add(49, "foo").setLen(49).setLen(50)
   check v9.get(49) == ""
   check v9.shift == 1
+  # non-initialized vecs work (but not recommended)
+  var v10: Vec[string]
+  check v10.getOrDefault(0, "") == ""
+  check v10.add("hello").get(0) == "hello"
 
 import hashes
 

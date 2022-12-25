@@ -104,6 +104,9 @@ func del*[K, V](m: Map[K, V], key: K): Map[K, V] =
   del(m, hash(key))
 
 func get[K, V](node: MapNode[K, V], level: int, keyHash: Hash): V =
+  if node == nil:
+    # this can happen if the Map was not initialized
+    raise newException(KeyError, "Key not found")
   let
     index = (keyHash shr level) and mask
     child = node.nodes[index]
@@ -176,7 +179,7 @@ func `==`*[K, V](m1: Map[K, V], m2: Map[K, V]): bool  =
   ## Returns whether the `Map`s are equal
   if m1.len != m2.len:
     false
-  elif m1.root.unsafeAddr == m2.root.unsafeAddr:
+  elif m1.root == m2.root:
     true
   else:
     for (k, v) in m1.pairs:
@@ -301,6 +304,9 @@ func excl*[T](s: Set[T], key: T): Set[T]  =
   excl(s, hash(key))
 
 func contains[T](node: SetNode[T], level: int, keyHash: Hash): bool  =
+  if node == nil:
+    # this can happen if the Set was not initialized
+    return false
   let index = (keyHash shr level) and mask
   let child = node.nodes[index]
   if child == nil:
@@ -347,7 +353,7 @@ func `==`*[T](s1: Set[T], s2: Set[T]): bool  =
   ## Returns whether the `Set`s are equal
   if s1.len != s2.len:
     false
-  elif s1.root.unsafeAddr == s2.root.unsafeAddr:
+  elif s1.root == s2.root:
     true
   else:
     for k in s1.items:
@@ -487,6 +493,10 @@ func setLen*[T](v: Vec[T], newLen: Natural): Vec[T]  =
   res
 
 func get[T](node: VecNode[T], level: int, key: Natural): T =
+  if node == nil:
+    # this will never happen because uninitialized Vecs
+    # will produce an IndexError before it gets here
+    return default(T)
   let
     index = (key shr level) and mask
     child = node.nodes[index]
@@ -499,7 +509,7 @@ func get[T](node: VecNode[T], level: int, key: Natural): T =
     of Branch:
       get(child, level - parazoaBits, key)
     of Leaf:
-      return child.value
+      child.value
 
 func get*[T](v: Vec[T], key: Natural): T =
   ## Returns the value at `key`, or raises an exception if out of bounds
@@ -546,7 +556,7 @@ func `==`*[T](v1: Vec[T], v2: Vec[T]): bool  =
   ## Returns whether the `Vec`s are equal
   if v1.len != v2.len:
     false
-  elif v1.root.unsafeAddr == v2.root.unsafeAddr:
+  elif v1.root == v2.root:
     true
   else:
     for (i, v) in v1.pairs:
