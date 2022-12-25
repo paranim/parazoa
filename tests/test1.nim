@@ -5,12 +5,12 @@ include parazoa
 test "maps":
   let m1 = initMap[string, string]()
   let m2 = m1.add("hello", "world")
-  check m1.getOrDefault("hello", "") == ""
-  check m2.getOrDefault("hello", "") == "world"
-  check m2.contains("hello")
   expect(KeyError):
     discard m1.get("hello")
   check m2.get("hello") == "world"
+  check m1.getOrDefault("hello", "") == ""
+  check m2.getOrDefault("hello", "") == "world"
+  check m2.contains("hello")
   let m3 = m2.add("hello", "goodbye")
   expect(KeyError):
     discard m1.get("hello")
@@ -26,6 +26,7 @@ test "maps":
   check m3.len == 1
   check m4.len == 2
   check m5.len == 1
+  check m2 == {"hello": "world"}.toMap
   # large map
   var m6 = initMap[string, string]()
   for i in 0 .. 1024:
@@ -52,7 +53,7 @@ test "maps":
   check m1 != m2
   check m2 != m3
   check m8 == m9
-  # non-initialized maps work (but not recommended)
+  # non-initialized maps work
   var m10: Map[string, string]
   check m10.getOrDefault("hello", "") == ""
   check m10.add("hello", "world").get("hello") == "world"
@@ -74,6 +75,7 @@ test "sets":
   check s3.len == 1
   check s4.len == 2
   check s5.len == 1
+  check s2 == ["hello"].toSet
   # large set
   var s6 = initSet[string]()
   for i in 0 .. 1024:
@@ -89,7 +91,7 @@ test "sets":
   check s1 == s1
   check s1 != s2
   check s6 == s7
-  # non-initialized sets work (but not recommended)
+  # non-initialized sets work
   var s8: Set[string]
   check not s8.contains("hello")
   check s8.incl("hello").contains("hello")
@@ -98,11 +100,11 @@ test "sets":
 test "vecs":
   let v1 = initVec[string]()
   let v2 = v1.add("hello")
-  check v1.getOrDefault(0, "") == ""
-  check v2.getOrDefault(0, "") == "hello"
   expect(IndexError):
     discard v1.get(0)
   check v2.get(0) == "hello"
+  check v1.getOrDefault(0, "") == ""
+  check v2.getOrDefault(0, "") == "hello"
   let v3 = v1.add("goodbye")
   expect(IndexError):
     discard v1.get(0)
@@ -113,6 +115,7 @@ test "vecs":
   check v2.len == 1
   check v3.len == 1
   check v4.len == 2
+  check v2 == ["hello"].toVec
   let v5 = v4.add(1, "hello")
   check v5.get(0) == "goodbye"
   check v5.get(1) == "hello"
@@ -143,7 +146,7 @@ test "vecs":
   let v9 = v8.setLen(50).add(49, "foo").setLen(49).setLen(50)
   check v9.get(49) == ""
   check v9.shift == 1
-  # non-initialized vecs work (but not recommended)
+  # non-initialized vecs work
   var v10: Vec[string]
   check v10.setLen(10).len == 10
   check v10.getOrDefault(0, "") == ""
