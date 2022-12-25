@@ -68,8 +68,7 @@ func add[K, V](res: var Map[K, V], node: MapNode[K, V], level: int, keyHash: Has
 func add[K, V](m: Map[K, V], keyHash: Hash, key: K, value: V): Map[K, V]  =
   var res = m
   res.root = copyRef(m.root)
-  var node = res.root
-  add(res, node, 0, keyHash, key, value)
+  add(res, res.root, 0, keyHash, key, value)
   res
 
 func add*[K, V](m: Map[K, V], key: K, value: V): Map[K, V]  =
@@ -104,6 +103,9 @@ func del*[K, V](m: Map[K, V], key: K): Map[K, V] =
   del(m, hash(key))
 
 func get[K, V](node: MapNode[K, V], level: int, keyHash: Hash): V =
+  if node == nil:
+    # this can happen if the Map was not initialized
+    raise newException(KeyError, "Key not found")
   let
     index = (keyHash shr level) and mask
     child = node.nodes[index]
@@ -143,24 +145,25 @@ func contains*[K, V](m: Map[K, V], key: K): bool  =
 
 iterator pairs*[K, V](m: Map[K, V]): (K, V) =
   ## Iterates over the key-value pairs in the `Map`
-  var stack: seq[tuple[parent: MapNode[K, V], index: int]] = @[(m.root, 0)]
-  while stack.len > 0:
-    let (parent, index) = stack[stack.len-1]
-    if index == parent.nodes.len:
-      discard stack.pop()
-      if stack.len > 0:
-        stack[stack.len-1].index += 1
-    else:
-      let node = parent.nodes[index]
-      if node == nil:
-        stack[stack.len-1].index += 1
-      else:
-        case node.kind:
-        of Leaf:
-          yield (node.key, node.value)
+  if m.root != nil:
+    var stack: seq[tuple[parent: MapNode[K, V], index: int]] = @[(m.root, 0)]
+    while stack.len > 0:
+      let (parent, index) = stack[stack.len-1]
+      if index == parent.nodes.len:
+        discard stack.pop()
+        if stack.len > 0:
           stack[stack.len-1].index += 1
-        of Branch:
-          stack.add((node, 0))
+      else:
+        let node = parent.nodes[index]
+        if node == nil:
+          stack[stack.len-1].index += 1
+        else:
+          case node.kind:
+          of Leaf:
+            yield (node.key, node.value)
+            stack[stack.len-1].index += 1
+          of Branch:
+            stack.add((node, 0))
 
 iterator keys*[K, V](m: Map[K, V]): K =
   ## Iterates over the keys in the `Map`
@@ -176,7 +179,7 @@ func `==`*[K, V](m1: Map[K, V], m2: Map[K, V]): bool  =
   ## Returns whether the `Map`s are equal
   if m1.len != m2.len:
     false
-  elif m1.root.unsafeAddr == m2.root.unsafeAddr:
+  elif m1.root == m2.root:
     true
   else:
     for (k, v) in m1.pairs:
@@ -213,15 +216,15 @@ func hash*[K, V](m: Map[K, V]): Hash  =
   !$h
 
 func `&`*[K, V](m1: Map[K, V], m2: Map[K, V]): Map[K, V] =
-  ## Returns a concatenation of the `Map`s
+  ## Returns a merge of the `Map`s
   var res = m1
   for (k, v) in m2.pairs:
     res = res.add(k, v)
   res
 
 func add*[K, V](m1: var Map[K, V], m2: Map[K, V]) =
-  ## Concatenates the second `Map` into the first one
-  ## (This mutates the var with a new `Map` -- the old `Map` is not mutated)
+  ## Merges the second `Map` into the first one
+  ## (This sets the var to a new `Map` -- the old `Map` is not mutated)
   m1 = m1 & m2
 
 type
@@ -305,6 +308,9 @@ func excl*[T](s: Set[T], key: T): Set[T]  =
   excl(s, hash(key))
 
 func contains[T](node: SetNode[T], level: int, keyHash: Hash): bool  =
+  if node == nil:
+    # this can happen if the Set was not initialized
+    return false
   let index = (keyHash shr level) and mask
   let child = node.nodes[index]
   if child == nil:
@@ -328,30 +334,31 @@ func contains*[T](s: Set[T], key: T): bool  =
 
 iterator items*[T](s: Set[T]): T =
   ## Iterates over the values in the `Set`
-  var stack: seq[tuple[parent: SetNode[T], index: int]] = @[(s.root, 0)]
-  while stack.len > 0:
-    let (parent, index) = stack[stack.len-1]
-    if index == parent.nodes.len:
-      discard stack.pop()
-      if stack.len > 0:
-        stack[stack.len-1].index += 1
-    else:
-      let node = parent.nodes[index]
-      if node == nil:
-        stack[stack.len-1].index += 1
-      else:
-        case node.kind:
-        of Branch:
-          stack.add((node, 0))
-        of Leaf:
-          yield node.key
+  if s.root != nil:
+    var stack: seq[tuple[parent: SetNode[T], index: int]] = @[(s.root, 0)]
+    while stack.len > 0:
+      let (parent, index) = stack[stack.len-1]
+      if index == parent.nodes.len:
+        discard stack.pop()
+        if stack.len > 0:
           stack[stack.len-1].index += 1
+      else:
+        let node = parent.nodes[index]
+        if node == nil:
+          stack[stack.len-1].index += 1
+        else:
+          case node.kind:
+          of Branch:
+            stack.add((node, 0))
+          of Leaf:
+            yield node.key
+            stack[stack.len-1].index += 1
 
 func `==`*[T](s1: Set[T], s2: Set[T]): bool  =
   ## Returns whether the `Set`s are equal
   if s1.len != s2.len:
     false
-  elif s1.root.unsafeAddr == s2.root.unsafeAddr:
+  elif s1.root == s2.root:
     true
   else:
     for k in s1.items:
@@ -389,7 +396,7 @@ func `&`*[T](s1: Set[T], s2: Set[T]): Set[T] =
 
 func add*[T](s1: var Set[T], s2: Set[T]) =
   ## Unites the second `Set` into the first one
-  ## (This mutates the var with a new `Set` -- the old `Set` is not mutated)
+  ## (This sets the var to a new `Set` -- the old `Set` is not mutated)
   s1 = s1 & s2
 
 type
@@ -492,6 +499,10 @@ func setLen*[T](v: Vec[T], newLen: Natural): Vec[T]  =
   res
 
 func get[T](node: VecNode[T], level: int, key: Natural): T =
+  if node == nil:
+    # this will never happen because uninitialized Vecs
+    # will produce an IndexError before it gets here
+    return default(T)
   let
     index = (key shr level) and mask
     child = node.nodes[index]
@@ -504,7 +515,7 @@ func get[T](node: VecNode[T], level: int, key: Natural): T =
     of Branch:
       get(child, level - parazoaBits, key)
     of Leaf:
-      return child.value
+      child.value
 
 func get*[T](v: Vec[T], key: Natural): T =
   ## Returns the value at `key`, or raises an exception if out of bounds
@@ -521,28 +532,29 @@ func getOrDefault*[T](v: Vec[T], key: Natural, defaultValue: T): T  =
 
 iterator pairs*[T](v: Vec[T]): (Natural, T) =
   ## Iterates over the indexes and values in the `Vec`
-  var stack: seq[tuple[parent: VecNode[T], index: int]] = @[(v.root, v.start.int)]
-  var key: Natural = 0
-  while stack.len > 0:
-    let (parent, index) = stack[stack.len-1]
-    if index == parent.nodes.len:
-      discard stack.pop()
-      if stack.len > 0:
-        stack[stack.len-1].index += 1
-    else:
-      let node = parent.nodes[index]
-      if node == nil:
-        break
-      else:
-        case node.kind:
-        of Branch:
-          stack.add((node, 0))
-        of Leaf:
-          if key >= v.size:
-            break
-          yield (key, node.value)
+  if v.root != nil:
+    var stack: seq[tuple[parent: VecNode[T], index: int]] = @[(v.root, v.start.int)]
+    var key: Natural = 0
+    while stack.len > 0:
+      let (parent, index) = stack[stack.len-1]
+      if index == parent.nodes.len:
+        discard stack.pop()
+        if stack.len > 0:
           stack[stack.len-1].index += 1
-          key += 1
+      else:
+        let node = parent.nodes[index]
+        if node == nil:
+          break
+        else:
+          case node.kind:
+          of Branch:
+            stack.add((node, 0))
+          of Leaf:
+            if key >= v.size:
+              break
+            yield (key, node.value)
+            stack[stack.len-1].index += 1
+            key += 1
 
 iterator items*[T](v: Vec[T]): T =
   ## Iterates over the values in the `Vec`
@@ -565,7 +577,7 @@ func `==`*[T](v1: Vec[T], v2: Vec[T]): bool  =
   ## Returns whether the `Vec`s are equal
   if v1.len != v2.len:
     false
-  elif v1.root.unsafeAddr == v2.root.unsafeAddr:
+  elif v1.root == v2.root:
     true
   else:
     for (i, v) in v1.pairs:
@@ -609,5 +621,5 @@ func `&`*[T](v1: Vec[T], v2: Vec[T]): Vec[T] =
 
 func add*[T](v1: var Vec[T], v2: Vec[T]) =
   ## Concatenates the second `Vec` into the first one
-  ## (This mutates the var with a new `Vec` -- the old `Vec` is not mutated)
+  ## (This sets the var to a new `Vec` -- the old `Vec` is not mutated)
   v1 = v1 & v2
