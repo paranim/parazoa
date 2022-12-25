@@ -394,10 +394,6 @@ func `&`*[T](s1: Set[T], s2: Set[T]): Set[T] =
     res = res.add(k)
   res
 
-func `in`*[T](s: Set[T], key: T): bool =
-  ## Returns whether `key` is inside the `Set`
-  s.contains(key)
-
 func add*[T](s1: var Set[T], s2: Set[T]) =
   ## Unites the second `Set` into the first one
   ## (This sets the var to a new `Set` -- the old `Set` is not mutated)
