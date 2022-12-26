@@ -422,7 +422,8 @@ func add[T](res: var Vec[T], node: VecNode[T], level: int, key: Natural, value: 
   if child == nil:
     if level == 0:
       node.nodes[index] = VecNode[T](kind: Leaf, value: value)
-      res.size += 1
+      if key == res.size:
+        res.size += 1
     else:
       let newChild = VecNode[T](kind: Branch)
       node.nodes[index] = newChild

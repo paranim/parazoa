@@ -138,6 +138,7 @@ test "vecs":
   # setLen
   check v3 == v4.setLen(v3.len)
   let v8 = v2.setLen(1025).add(1024, "foo").setLen(1024).setLen(1025)
+  check v8.add(100, "hi").size == 1025
   check v8.get(1024) == ""
   check v8.shift == 2
   check v2.setLen(32).shift == 0
