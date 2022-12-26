@@ -474,11 +474,6 @@ func setLen*[T](v: Vec[T], newLen: Natural): Vec[T]  =
         break
     res.root = copyRef(res.root)
     res.size = newLen
-    # nil out the remaining nodes
-    # in case any of them have data from the larger vec
-    let index = (res.size shr (res.shift * parazoaBits)) and mask
-    for i in index ..< res.root.nodes.len:
-      res.root.nodes[i] = nil
   elif v.len < newLen:
     while true:
       let maxSize = branchWidth ^ (res.shift + 1)

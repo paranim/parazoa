@@ -145,8 +145,13 @@ test "vecs":
   check v2.setLen(32).shift == 0
   check v2.setLen(33).setLen(32).shift == 0
   check v2.setLen(33).setLen(32).setLen(33).shift == 1
+  var count = 0
+  for (i, val) in v8.pairs:
+    count += 1
+  check count == 1025
+  check v2.get(0) == v2.setLen(1025).setLen(1024).get(0)
   let v9 = v8.setLen(50).add(49, "foo").setLen(49).setLen(50)
-  check v9.get(49) == ""
+  check v9.get(49) == "foo"
   check v9.shift == 1
   # non-initialized vecs work
   var v10: Vec[string]
