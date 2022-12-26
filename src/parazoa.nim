@@ -529,26 +529,8 @@ func getOrDefault*[T](v: Vec[T], key: Natural, defaultValue: T): T  =
 iterator pairs*[T](v: Vec[T]): (Natural, T) =
   ## Iterates over the indexes and values in the `Vec`
   if v.root != nil:
-    var stack: seq[tuple[parent: VecNode[T], index: int]] = @[(v.root, 0)]
-    var key: Natural = 0
-    while stack.len > 0:
-      let (parent, index) = stack[stack.len-1]
-      if index == parent.nodes.len:
-        discard stack.pop()
-        if stack.len > 0:
-          stack[stack.len-1].index += 1
-      else:
-        let node = parent.nodes[index]
-        if node == nil:
-          break
-        else:
-          case node.kind:
-          of Branch:
-            stack.add((node, 0))
-          of Leaf:
-            yield (key, node.value)
-            stack[stack.len-1].index += 1
-            key += 1
+    for i in 0.Natural ..< v.len:
+      yield (i, v.get(i))
 
 iterator items*[T](v: Vec[T]): T =
   ## Iterates over the values in the `Vec`
