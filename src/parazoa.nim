@@ -422,8 +422,6 @@ func add[T](res: var Vec[T], node: VecNode[T], level: int, key: Natural, value: 
   if child == nil:
     if level == 0:
       node.nodes[index] = VecNode[T](kind: Leaf, value: value)
-      if key == res.size:
-        res.size += 1
     else:
       let newChild = VecNode[T](kind: Branch)
       node.nodes[index] = newChild
@@ -451,6 +449,8 @@ func add*[T](v: Vec[T], key: Natural, value: T): Vec[T] =
     res.root.nodes[index] = v.root
   else:
     res.root = copyRef(v.root)
+  if key == res.size:
+    res.size += 1
   add(res, res.root, res.shift * parazoaBits, key, value)
   res
 
