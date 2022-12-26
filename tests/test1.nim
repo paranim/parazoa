@@ -116,6 +116,7 @@ test "vecs":
   check v3.len == 1
   check v4.len == 2
   check v2 == ["hello"].toVec
+  check v2.add(0, "goodbye").len == 1
   let v5 = v4.add(1, "hello")
   check v5.get(0) == "goodbye"
   check v5.get(1) == "hello"
