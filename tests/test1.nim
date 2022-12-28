@@ -12,9 +12,6 @@ test "maps":
   check m2.getOrDefault("hello", "") == "world"
   check m2.contains("hello")
   let m3 = m2.add("hello", "goodbye")
-  expect(KeyError):
-    discard m1.get("hello")
-  check m2.get("hello") == "world"
   check m3.get("hello") == "goodbye"
   let m4 = m3.add("what's", "up")
   let m5 = m3.del("what's").del("asdf")
@@ -65,8 +62,6 @@ test "sets":
   check not s1.contains("hello")
   check s2.contains("hello")
   let s3 = s1.incl("goodbye")
-  check not s1.contains("hello")
-  check s2.contains("hello")
   check s3.contains("goodbye")
   let s4 = s3.incl("what's")
   let s5 = s3.excl("what's").excl("asdf")
@@ -106,9 +101,6 @@ test "vecs":
   check v1.getOrDefault(0, "") == ""
   check v2.getOrDefault(0, "") == "hello"
   let v3 = v1.add("goodbye")
-  expect(IndexError):
-    discard v1.get(0)
-  check v2.get(0) == "hello"
   check v3.get(0) == "goodbye"
   let v4 = v3.add("what's")
   check v1.len == 0
